@@ -57,7 +57,7 @@ public class ROVER_07 {
 	/**
 	 * Connects to the server then enters the processing loop.
 	 */
-	private void run() throws IOException, InterruptedException {
+	private void run() throws IOException {
 		gson = new GsonBuilder().setPrettyPrinting().create();
 
 		// Make connection and initialize streams
@@ -75,33 +75,37 @@ public class ROVER_07 {
 				break;
 			}
 		}
+		
+		// Enter main loop
+		try {
+			mainLoop();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			if (socket != null) socket.close();
+		}
+	}
 
-		// ******** Rover logic *********
-		// int cnt=0;
-		String line = "";
+	/**
+	 * Main rover logic
+	 */
+	private void mainLoop() throws IOException, InterruptedException {
+		String line;
 
 		boolean goingSouth = false;
-		boolean stuck = false; // just means it did not change locations between requests,
-								// could be velocity limit or obstruction etc.
 		boolean blocked = false;
 
-		String[] cardinals = new String[4];
-		cardinals[0] = "N";
-		cardinals[1] = "E";
-		cardinals[2] = "S";
-		cardinals[3] = "W";
-
-		String currentDir = cardinals[0];
 		Coord currentLoc = null;
-		Coord previousLoc = null;
 
 		// start Rover controller process
 		while (true) {
-
 			// currently the requirements allow sensor calls to be made with no
 			// simulated resource cost
-			
-			
+
 			// **** location call ****
 			out.println("LOC");
 			line = in.readLine();
@@ -110,33 +114,26 @@ public class ROVER_07 {
             	line = "";
             }
 			if (line.startsWith("LOC")) {
-				// loc = line.substring(4);
 				currentLoc = extractLOC(line);
 			}
 			System.out.println("ROVER_07 currentLoc at start: " + currentLoc);
-			
-			// after getting location set previous equal current to be able to check for stuckness and blocked later
-			previousLoc = currentLoc;
-			
-			
-			
+
+
+
 			// **** get equipment listing ****			
 			ArrayList<String> equipment = new ArrayList<String>();
 			equipment = getEquipment();
-			//System.out.println("ROVER_07 equipment list results drive " + equipment.get(0));
 			System.out.println("ROVER_07 equipment list results " + equipment + "\n");
-			
-	
+
+
 
 			// ***** do a SCAN *****
 			//System.out.println("ROVER_07 sending SCAN request");
 			this.doScan();
 			scanMap.debugPrintMap();
-			
-			
-			
 
-			
+
+
 			// ***** MOVING *****
 			// try moving east 5 block if blocked
 			if (blocked) {
@@ -189,7 +186,7 @@ public class ROVER_07 {
 			// another call for current location
 			out.println("LOC");
 			line = in.readLine();
-			if(line == null){
+			if (line == null) {
 				System.out.println("ROVER_07 check connection to server");
 				line = "";
 			}
@@ -198,25 +195,20 @@ public class ROVER_07 {
 			}
 
 			//System.out.println("ROVER_07 currentLoc after recheck: " + currentLoc);
-			//System.out.println("ROVER_07 previousLoc: " + previousLoc);
-
-			// test for stuckness
-			stuck = currentLoc.equals(previousLoc);
 
 			//System.out.println("ROVER_07 stuck test " + stuck);
 			System.out.println("ROVER_07 blocked test " + blocked);
 
 			// TODO - logic to calculate where to move next
 
-			
-			
+
+
 			Thread.sleep(sleepTime);
-			
+
 			System.out.println("ROVER_07 ------------ bottom process control --------------"); 
 		}
-
 	}
-	
+
 	// ################ Support Methods ###########################
 
 	private void clearReadLineBuffer() throws IOException{
