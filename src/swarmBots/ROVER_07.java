@@ -4,10 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.lang.reflect.Type;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -213,8 +211,7 @@ public class ROVER_07 {
 
 	private void clearReadLineBuffer() throws IOException{
 		while (in.ready()) {
-			//System.out.println("ROVER_07 clearing readLine()");
-			String garbage = in.readLine();	
+			in.readLine();	
 		}
 	}
 
