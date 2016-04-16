@@ -27,6 +27,7 @@ public class ROVER_07 {
 	final String ROVER_NAME = "ROVER_07";
 	String SERVER_ADDRESS = "localhost";
 	final int PORT_ADDRESS = 9537;
+	final int SERVER_ID = 8087;
 
 	// io
 	BufferedReader in;
