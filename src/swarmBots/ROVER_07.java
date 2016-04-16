@@ -25,28 +25,31 @@ import enums.Terrain;
  */
 
 public class ROVER_07 {
+	// connection settings
+	final String ROVER_NAME = "ROVER_07";
+	String SERVER_ADDRESS = "localhost";
+	final int PORT_ADDRESS = 9537;
 
+	// io
 	BufferedReader in;
 	PrintWriter out;
-	String rovername;
+
+	// rover vars
+	Gson gson;
 	ScanMap scanMap;
 	int sleepTime;
-	String SERVER_ADDRESS = "localhost";
-	static final int PORT_ADDRESS = 9537;
 
+	/**
+	 * Constructors
+	 */
 	public ROVER_07() {
-		// constructor
 		System.out.println("ROVER_07 rover object constructed");
-		rovername = "ROVER_07";
 		SERVER_ADDRESS = "localhost";
-		// this should be a safe but slow timer value
 		sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	}
-	
+
 	public ROVER_07(String serverAddress) {
-		// constructor
 		System.out.println("ROVER_07 rover object constructed");
-		rovername = "ROVER_07";
 		SERVER_ADDRESS = serverAddress;
 		sleepTime = 200; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	}
@@ -55,23 +58,20 @@ public class ROVER_07 {
 	 * Connects to the server then enters the processing loop.
 	 */
 	private void run() throws IOException, InterruptedException {
+		gson = new GsonBuilder().setPrettyPrinting().create();
 
 		// Make connection and initialize streams
-		//TODO - need to close this socket
-		Socket socket = new Socket(SERVER_ADDRESS, PORT_ADDRESS); // set port here
+		// TODO - need to close this socket
+		Socket socket = new Socket(SERVER_ADDRESS, PORT_ADDRESS);
 		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		out = new PrintWriter(socket.getOutputStream(), true);
 
-		//Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		// Process all messages from server, wait until server requests Rover ID
-		// name
+		// Process all messages from server, wait until server requests Rover ID name
 		while (true) {
 			String line = in.readLine();
 			if (line.startsWith("SUBMITNAME")) {
-				out.println(rovername); // This sets the name of this instance
-										// of a swarmBot for identifying the
-										// thread to the server
+				// This sets the name of this instance of a swarmBot for identifying the thread to the server
+				out.println(ROVER_NAME);
 				break;
 			}
 		}
@@ -218,33 +218,29 @@ public class ROVER_07 {
 	}
 	
 	// ################ Support Methods ###########################
-	
+
 	private void clearReadLineBuffer() throws IOException{
-		while(in.ready()){
+		while (in.ready()) {
 			//System.out.println("ROVER_07 clearing readLine()");
 			String garbage = in.readLine();	
 		}
 	}
-	
 
 	// method to retrieve a list of the rover's equipment from the server
 	private ArrayList<String> getEquipment() throws IOException {
 		//System.out.println("ROVER_07 method getEquipment()");
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		out.println("EQUIPMENT");
-		
-		String jsonEqListIn = in.readLine(); //grabs the string that was returned first
-		if(jsonEqListIn == null){
+
+		String jsonEqListIn = in.readLine(); // grabs the string that was returned first
+		if (jsonEqListIn == null) {
 			jsonEqListIn = "";
 		}
+
 		StringBuilder jsonEqList = new StringBuilder();
 		//System.out.println("ROVER_07 incomming EQUIPMENT result - first readline: " + jsonEqListIn);
-		
-		if(jsonEqListIn.startsWith("EQUIPMENT")){
+
+		if (jsonEqListIn.startsWith("EQUIPMENT")) {
 			while (!(jsonEqListIn = in.readLine()).equals("EQUIPMENT_END")) {
-				if(jsonEqListIn == null){
-					break;
-				}
 				//System.out.println("ROVER_07 incomming EQUIPMENT result: " + jsonEqListIn);
 				jsonEqList.append(jsonEqListIn);
 				jsonEqList.append("\n");
@@ -255,33 +251,30 @@ public class ROVER_07 {
 			clearReadLineBuffer();
 			return null; // server response did not start with "EQUIPMENT"
 		}
-		
+
 		String jsonEqListString = jsonEqList.toString();		
 		ArrayList<String> returnList;		
 		returnList = gson.fromJson(jsonEqListString, new TypeToken<ArrayList<String>>(){}.getType());		
 		//System.out.println("ROVER_07 returnList " + returnList);
-		
+
 		return returnList;
 	}
-	
 
 	// sends a SCAN request to the server and puts the result in the scanMap array
 	public void doScan() throws IOException {
 		//System.out.println("ROVER_07 method doScan()");
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		out.println("SCAN");
 
-		String jsonScanMapIn = in.readLine(); //grabs the string that was returned first
-		if(jsonScanMapIn == null){
+		String jsonScanMapIn = in.readLine(); // grabs the string that was returned first
+		if (jsonScanMapIn == null){
 			System.out.println("ROVER_07 check connection to server");
 			jsonScanMapIn = "";
 		}
-		StringBuilder jsonScanMap = new StringBuilder();
 		System.out.println("ROVER_07 incomming SCAN result - first readline: " + jsonScanMapIn);
-		
-		if(jsonScanMapIn.startsWith("SCAN")){	
+
+		StringBuilder jsonScanMap = new StringBuilder();
+		if (jsonScanMapIn.startsWith("SCAN")) {	
 			while (!(jsonScanMapIn = in.readLine()).equals("SCAN_END")) {
-				//System.out.println("ROVER_07 incomming SCAN result: " + jsonScanMapIn);
 				jsonScanMap.append(jsonScanMapIn);
 				jsonScanMap.append("\n");
 				//System.out.println("ROVER_07 doScan() bottom of while");
@@ -297,28 +290,24 @@ public class ROVER_07 {
 		// debug print json object to a file
 		//new MyWriter( jsonScanMapString, 0);  //gives a strange result - prints the \n instead of newline character in the file
 
-		//System.out.println("ROVER_07 convert from json back to ScanMap class");
 		// convert from the json string back to a ScanMap object
 		scanMap = gson.fromJson(jsonScanMapString, ScanMap.class);		
 	}
-	
 
 	// this takes the LOC response string, parses out the x and x values and
 	// returns a Coord object
 	public static Coord extractLOC(String sStr) {
-		sStr = sStr.substring(4);
-		if (sStr.lastIndexOf(" ") != -1) {
-			String xStr = sStr.substring(0, sStr.lastIndexOf(" "));
-			//System.out.println("extracted xStr " + xStr);
-
-			String yStr = sStr.substring(sStr.lastIndexOf(" ") + 1);
-			//System.out.println("extracted yStr " + yStr);
+		sStr = sStr.substring(4); // consume "LOC "
+		int spaceIdx = sStr.lastIndexOf(" ");
+		if (spaceIdx != -1) {
+			String xStr = sStr.substring(0, spaceIdx);
+			String yStr = sStr.substring(spaceIdx + 1);
 			return new Coord(Integer.parseInt(xStr), Integer.parseInt(yStr));
 		}
 		return null;
 	}
-	
-	
+
+
 
 	/**
 	 * Runs the client
