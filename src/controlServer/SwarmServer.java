@@ -30,6 +30,7 @@ import enums.RoverName;
 import enums.RoverToolType;
 import enums.Science;
 import enums.Terrain;
+import supportTools.SwarmMapInit;
 
 
 /**
@@ -44,19 +45,23 @@ public class SwarmServer {
      * The port that the server listens on.
      */
     private static final int PORT = 9537; // because ... class number
+    
+    private static SwarmMapInit mapInit = new SwarmMapInit();
+    
+    private static final String mapFileName = "mapset2.txt";
 
     // TODO - these should actually be loaded from a file along with the map
-    private static int mapWidth = 30;
-    private static int mapHeight = 30;
-    private static PlanetMap planetMap = new PlanetMap(mapWidth, mapHeight); 
+    private static int mapWidth = 0;
+    private static int mapHeight = 0;
+    private static PlanetMap planetMap = null; // = new PlanetMap(mapWidth, mapHeight); 
     private static RoverLocations roverLocations = new RoverLocations();
     private static ScienceLocations scienceLocations = new ScienceLocations();
     
-//  static GUIdisplay mainPanel;
-//	static MyGUIWorker myWorker;
+	static GUIdisplay mainPanel;
+	static MyGUIWorker myWorker;
 	
-    static GUIdisplay2 mainPanel;
-	static MyGUIWorker2 myWorker;
+    static GUIdisplay2 mainPanel2;
+	static MyGUIWorker2 myWorker2;
     
 	// These are the velocity or speed values for the different drive systems
 	// Changes these as necessary for good simulation balance
@@ -72,7 +77,7 @@ public class SwarmServer {
     
  // length of a side of the scan map array !!! must be odd number !!!
     static final int STANDARD_SCANMAP_RANGE = 7;
-    static final int BOOSTED_SCANMAP_RANGE = 11;
+    static final int BOOSTED_SCANMAP_RANGE = 11; // range extender increased to 11 by popular demand
     
     /**
      * The application main method, which just listens on a port and
@@ -81,30 +86,39 @@ public class SwarmServer {
     public static void main(String[] args) throws Exception {
         System.out.println("The Swarm server is running.");
         ServerSocket listener = new ServerSocket(PORT);
+        
+        
+        mapInit.parseInputFromDisplayTextFile(mapFileName);
+        
+        mapHeight = mapInit.getMapHeight();
+        mapWidth = mapInit.getMapWidth();
+        planetMap = mapInit.getPlanetMap();
+        roverLocations = mapInit.getRoverLocations();
+        scienceLocations = mapInit.getScienceLocations();
+        
+		mainPanel = new GUIdisplay(mapWidth, mapHeight);
+		myWorker = new MyGUIWorker(mainPanel);
+        
        
-//		mainPanel = new GUIdisplay();
-//		myWorker = new MyGUIWorker(mainPanel);
-		
-		mainPanel = new GUIdisplay2(mapWidth, mapHeight);
-		myWorker = new MyGUIWorker2(mainPanel);
+		mainPanel2 = new GUIdisplay2(mapWidth, mapHeight);
+		myWorker2 = new MyGUIWorker2(mainPanel2);
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				//TODO - send a copy of the planetMap to GUI to use as background image
 				// currently sending it when calling the updateGUIDisplay() method
-				GUIdisplay2.createAndShowGui(myWorker, mainPanel);
+				GUIdisplay.createAndShowGui(myWorker, mainPanel);
+				GUIdisplay2.createAndShowGui(myWorker2, mainPanel2);
 			}
 		});
-		
-        
+		       
         try {
             while (true) {
                 new Handler(listener.accept()).start();
             }
         } finally {
             listener.close();
-        }
-              
+        }         
     }
 
     /**
@@ -699,5 +713,6 @@ public class SwarmServer {
 		//myWorker.displayRovers(roverLocations);
 		//myWorker.displayActivity(roverLocations, scienceLocations);
 		myWorker.displayFullMap(roverLocations, scienceLocations, planetMap);
+		myWorker2.displayFullMap(roverLocations, scienceLocations, planetMap);
 	}
 }
