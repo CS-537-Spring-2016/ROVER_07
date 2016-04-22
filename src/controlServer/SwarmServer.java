@@ -48,7 +48,7 @@ public class SwarmServer {
     
     private static SwarmMapInit mapInit = new SwarmMapInit();
     
-    private static final String mapFileName = "mapset2.txt";
+    private static final String mapFileName = "largeMap50x50map2.txt";
 
     // TODO - these should actually be loaded from a file along with the map
     private static int mapWidth = 0;
@@ -107,8 +107,14 @@ public class SwarmServer {
 			public void run() {
 				//TODO - send a copy of the planetMap to GUI to use as background image
 				// currently sending it when calling the updateGUIDisplay() method
-				GUIdisplay.createAndShowGui(myWorker, mainPanel);
+				//GUIdisplay.createAndShowGui(myWorker, mainPanel);
 				GUIdisplay2.createAndShowGui(myWorker2, mainPanel2);
+				try {
+					updateGUIDisplay();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 		       
@@ -712,7 +718,7 @@ public class SwarmServer {
 	static void updateGUIDisplay() throws Exception{
 		//myWorker.displayRovers(roverLocations);
 		//myWorker.displayActivity(roverLocations, scienceLocations);
-		myWorker.displayFullMap(roverLocations, scienceLocations, planetMap);
-		myWorker2.displayFullMap(roverLocations, scienceLocations, planetMap);
+		//myWorker.displayFullMap(roverLocations, scienceLocations, planetMap);
+		myWorker2.displayFullMap(roverLocations.clone(), scienceLocations, planetMap);
 	}
 }
