@@ -10,6 +10,7 @@ import com.google.gson.reflect.TypeToken;
 
 import common.Coord;
 import common.ScanMap;
+import enums.Science;
 
 public class Query {
 	public enum LocType {
@@ -99,7 +100,31 @@ public class Query {
 		return gson.fromJson(jsonScanMap.toString(), ScanMap.class);
 	}
 	
+	public ArrayList<Science> getCargo() throws IOException {
+		out.println("CARGO");
+
+		String jsonCargoListIn = in.readLine(); // get first reply
+		if (jsonCargoListIn == null || !jsonCargoListIn.startsWith("CARGO")){
+			// if no match, bail
+			flush();
+			return null;
+		}
+
+		// start building string of json data
+		StringBuilder jsonCargoList = new StringBuilder();	
+		while (!(jsonCargoListIn = in.readLine()).equals("CARGO_END")) {
+			jsonCargoList.append(jsonCargoListIn);
+		}
+
+		// return parsed result
+		return gson.fromJson(jsonCargoList.toString(), new TypeToken<ArrayList<Science>>(){}.getType());
+	}
+	
 	public void doMove(String dir) {
 		out.println("MOVE " + dir);
+	}
+	
+	public void doGather() {
+		out.println("GATHER");
 	}
 }
