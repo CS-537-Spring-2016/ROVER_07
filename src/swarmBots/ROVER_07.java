@@ -17,6 +17,7 @@ import common.ScanMap;
 import enums.Terrain;
 
 import rover07Util.Parser;
+import rover07Util.Query;
 
 /**
  * The seed that this program is built on is a chat program example found here:
@@ -33,6 +34,7 @@ public class ROVER_07 {
 	// io
 	BufferedReader in;
 	PrintWriter out;
+	Query q;
 
 	// rover vars
 	Gson gson;
@@ -65,6 +67,8 @@ public class ROVER_07 {
 		Socket socket = new Socket(SERVER_ADDRESS, PORT_ADDRESS);
 		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		out = new PrintWriter(socket.getOutputStream(), true);
+		
+		q = new Query(in, out, gson);
 
 		// Process all messages from server, wait until server requests Rover ID name
 		while (true) {
@@ -107,7 +111,7 @@ public class ROVER_07 {
 		 *  Get initial values that won't change
 		 */
 		// get EQUIPMENT			
-		ArrayList<String> equipment = getEquipment();
+		ArrayList<String> equipment = q.getEquipment();
 		System.out.println(ROVER_NAME + " equipment list results " + equipment + "\n");
 		
 		// get START_LOC
@@ -154,7 +158,7 @@ public class ROVER_07 {
 
 			// ***** do a SCAN *****
 			//System.out.println("ROVER_07 sending SCAN request");
-			this.doScan();
+			scanMap = q.getScan();
 			scanMap.debugPrintMap();
 
 
@@ -235,58 +239,6 @@ public class ROVER_07 {
 	}
 
 	// ################ Support Methods ###########################
-
-	private void clearReadLineBuffer() throws IOException{
-		while (in.ready()) {
-			in.readLine();	
-		}
-	}
-
-	// method to retrieve a list of the rover's equipment from the server
-	private ArrayList<String> getEquipment() throws IOException {
-		//System.out.println("ROVER_07 method getEquipment()");
-		out.println("EQUIPMENT");
-
-		String jsonEqListIn = in.readLine(); // get first reply
-		if (jsonEqListIn == null || !jsonEqListIn.startsWith("EQUIPMENT")) {
-			// if no match, bail
-			clearReadLineBuffer();
-			return null;
-		}
-
-		// start building string of json data
-		StringBuilder jsonEqList = new StringBuilder();
-		while (!(jsonEqListIn = in.readLine()).equals("EQUIPMENT_END")) {
-			jsonEqList.append(jsonEqListIn);
-		}
-
-		// return parsed result
-		return gson.fromJson(jsonEqList.toString(), new TypeToken<ArrayList<String>>(){}.getType());
-	}
-
-	// sends a SCAN request to the server and puts the result in the scanMap array
-	public void doScan() throws IOException {
-		//System.out.println("ROVER_07 method doScan()");
-		out.println("SCAN");
-
-		String jsonScanMapIn = in.readLine(); // get first reply
-		if (jsonScanMapIn == null || !jsonScanMapIn.startsWith("SCAN")){
-			// if no match, bail
-			clearReadLineBuffer();
-			return;
-		}
-
-		// start building string of json data
-		StringBuilder jsonScanMap = new StringBuilder();	
-		while (!(jsonScanMapIn = in.readLine()).equals("SCAN_END")) {
-			jsonScanMap.append(jsonScanMapIn);
-		}
-
-		// save parsed result
-		scanMap = gson.fromJson(jsonScanMap.toString(), ScanMap.class);
-	}
-
-
 
 	/**
 	 * Runs the client
