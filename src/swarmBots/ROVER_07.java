@@ -247,33 +247,21 @@ public class ROVER_07 {
 		//System.out.println("ROVER_07 method getEquipment()");
 		out.println("EQUIPMENT");
 
-		String jsonEqListIn = in.readLine(); // grabs the string that was returned first
-		if (jsonEqListIn == null) {
-			jsonEqListIn = "";
-		}
-
-		StringBuilder jsonEqList = new StringBuilder();
-		//System.out.println("ROVER_07 incomming EQUIPMENT result - first readline: " + jsonEqListIn);
-
-		if (jsonEqListIn.startsWith("EQUIPMENT")) {
-			while (!(jsonEqListIn = in.readLine()).equals("EQUIPMENT_END")) {
-				//System.out.println("ROVER_07 incomming EQUIPMENT result: " + jsonEqListIn);
-				jsonEqList.append(jsonEqListIn);
-				jsonEqList.append("\n");
-				//System.out.println("ROVER_07 doScan() bottom of while");
-			}
-		} else {
-			// in case the server call gives unexpected results
+		String jsonEqListIn = in.readLine(); // get first reply
+		if (jsonEqListIn == null || !jsonEqListIn.startsWith("EQUIPMENT")) {
+			// if no match, bail
 			clearReadLineBuffer();
-			return null; // server response did not start with "EQUIPMENT"
+			return null;
 		}
 
-		String jsonEqListString = jsonEqList.toString();		
-		ArrayList<String> returnList;		
-		returnList = gson.fromJson(jsonEqListString, new TypeToken<ArrayList<String>>(){}.getType());		
-		//System.out.println("ROVER_07 returnList " + returnList);
+		// start building string of json data
+		StringBuilder jsonEqList = new StringBuilder();
+		while (!(jsonEqListIn = in.readLine()).equals("EQUIPMENT_END")) {
+			jsonEqList.append(jsonEqListIn);
+		}
 
-		return returnList;
+		// return parsed result
+		return gson.fromJson(jsonEqList.toString(), new TypeToken<ArrayList<String>>(){}.getType());
 	}
 
 	// sends a SCAN request to the server and puts the result in the scanMap array
@@ -281,33 +269,21 @@ public class ROVER_07 {
 		//System.out.println("ROVER_07 method doScan()");
 		out.println("SCAN");
 
-		String jsonScanMapIn = in.readLine(); // grabs the string that was returned first
-		if (jsonScanMapIn == null){
-			System.out.println("ROVER_07 check connection to server");
-			jsonScanMapIn = "";
-		}
-		System.out.println("ROVER_07 incomming SCAN result - first readline: " + jsonScanMapIn);
-
-		StringBuilder jsonScanMap = new StringBuilder();
-		if (jsonScanMapIn.startsWith("SCAN")) {	
-			while (!(jsonScanMapIn = in.readLine()).equals("SCAN_END")) {
-				jsonScanMap.append(jsonScanMapIn);
-				jsonScanMap.append("\n");
-				//System.out.println("ROVER_07 doScan() bottom of while");
-			}
-		} else {
-			// in case the server call gives unexpected results
+		String jsonScanMapIn = in.readLine(); // get first reply
+		if (jsonScanMapIn == null || !jsonScanMapIn.startsWith("SCAN")){
+			// if no match, bail
 			clearReadLineBuffer();
-			return; // server response did not start with "SCAN"
+			return;
 		}
-		//System.out.println("ROVER_07 finished scan while");
 
-		String jsonScanMapString = jsonScanMap.toString();
-		// debug print json object to a file
-		//new MyWriter( jsonScanMapString, 0);  //gives a strange result - prints the \n instead of newline character in the file
+		// start building string of json data
+		StringBuilder jsonScanMap = new StringBuilder();	
+		while (!(jsonScanMapIn = in.readLine()).equals("SCAN_END")) {
+			jsonScanMap.append(jsonScanMapIn);
+		}
 
-		// convert from the json string back to a ScanMap object
-		scanMap = gson.fromJson(jsonScanMapString, ScanMap.class);		
+		// save parsed result
+		scanMap = gson.fromJson(jsonScanMap.toString(), ScanMap.class);
 	}
 
 
