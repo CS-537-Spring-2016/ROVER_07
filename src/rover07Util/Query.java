@@ -8,9 +8,26 @@ import java.util.ArrayList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import common.Coord;
 import common.ScanMap;
 
 public class Query {
+	public enum LocType {
+		HERE("LOC"),
+		START("START_LOC"),
+		TARGET("TARGET_LOC");
+		
+		private String command;
+		
+		LocType(String command) {
+			this.command = command;
+		}
+		
+		public String getCommand() {
+			return command;
+		}
+	}
+	
 	private BufferedReader in;
 	private PrintWriter out;
 	private Gson gson;
@@ -45,6 +62,22 @@ public class Query {
 		// return parsed result
 		return gson.fromJson(jsonEqList.toString(), new TypeToken<ArrayList<String>>(){}.getType());
 	}
+	
+	public Coord getLoc() throws IOException {
+		return getLoc(LocType.HERE);
+	}
+	
+	public Coord getLoc(LocType type) throws IOException {
+		out.println(type.getCommand());
+		
+		String line = in.readLine();
+        if (line == null || !line.startsWith(type.getCommand())) {
+        	flush();
+        	return null;
+        }
+        
+		return Parser.extractLocation(line);
+	}
 
 	public ScanMap getScan() throws IOException {
 		out.println("SCAN");
@@ -64,5 +97,9 @@ public class Query {
 
 		// return parsed result
 		return gson.fromJson(jsonScanMap.toString(), ScanMap.class);
+	}
+	
+	public void doMove(String dir) {
+		out.println("MOVE " + dir);
 	}
 }

@@ -104,6 +104,7 @@ public class ROVER_07 {
 		boolean blocked = false;
 		Coord currentLoc = null;
 
+		ArrayList<String> equipment;
 		Coord startLoc;
 		Coord targetLoc;
 
@@ -111,47 +112,23 @@ public class ROVER_07 {
 		 *  Get initial values that won't change
 		 */
 		// get EQUIPMENT			
-		ArrayList<String> equipment = q.getEquipment();
+		equipment = q.getEquipment();
 		System.out.println(ROVER_NAME + " equipment list results " + equipment + "\n");
 		
 		// get START_LOC
-		out.println("START_LOC");
-		line = in.readLine();
-        if (line == null) {
-        	System.out.println(ROVER_NAME + " check connection to server");
-        	line = "";
-        }
-		if (line.startsWith("START_LOC")) {
-			startLoc = Parser.extractLocation(line);
-			System.out.println(ROVER_NAME + " START_LOC " + startLoc);
-		}
+		startLoc = q.getLoc(Query.LocType.START);
+		System.out.println(ROVER_NAME + " START_LOC " + startLoc);
 		
 		// get TARGET_LOC
-		out.println("TARGET_LOC");
-		line = in.readLine();
-        if (line == null) {
-        	System.out.println(ROVER_NAME + " check connection to server");
-        	line = "";
-        }
-		if (line.startsWith("TARGET_LOC")) {
-			targetLoc = Parser.extractLocation(line);
-			System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
-		}
+		targetLoc = q.getLoc(Query.LocType.TARGET);
+		System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
 		
 		while (true) {
 			// currently the requirements allow sensor calls to be made with no
 			// simulated resource cost
 
 			// **** location call ****
-			out.println("LOC");
-			line = in.readLine();
-            if (line == null) {
-            	System.out.println("ROVER_07 check connection to server");
-            	line = "";
-            }
-			if (line.startsWith("LOC")) {
-				currentLoc = Parser.extractLocation(line);
-			}
+			currentLoc = q.getLoc();
 			System.out.println("ROVER_07 currentLoc at start: " + currentLoc);
 
 
@@ -167,7 +144,7 @@ public class ROVER_07 {
 			// try moving east 5 block if blocked
 			if (blocked) {
 				for (int i = 0; i < 5; i++) {
-					out.println("MOVE E");
+					q.doMove("E");
 					//System.out.println("ROVER_07 request move E");
 					Thread.sleep(300);
 				}
@@ -190,7 +167,7 @@ public class ROVER_07 {
 						blocked = true;
 					} else {
 						// request to server to move
-						out.println("MOVE S");
+						q.doMove("S");
 						//System.out.println("ROVER_07 request move S");
 					}
 					
@@ -206,22 +183,14 @@ public class ROVER_07 {
 						blocked = true;
 					} else {
 						// request to server to move
-						out.println("MOVE N");
+						q.doMove("N");
 						//System.out.println("ROVER_07 request move N");
 					}					
 				}
 			}
 
 			// another call for current location
-			out.println("LOC");
-			line = in.readLine();
-			if (line == null) {
-				System.out.println("ROVER_07 check connection to server");
-				line = "";
-			}
-			if (line.startsWith("LOC")) {
-				currentLoc = Parser.extractLocation(line);
-			}
+			currentLoc = q.getLoc();
 
 			//System.out.println("ROVER_07 currentLoc after recheck: " + currentLoc);
 
