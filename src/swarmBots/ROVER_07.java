@@ -16,6 +16,8 @@ import common.MapTile;
 import common.ScanMap;
 import enums.Terrain;
 
+import rover07Util.Parser;
+
 /**
  * The seed that this program is built on is a chat program example found here:
  * http://cs.lmu.edu/~ray/notes/javanetexamples/ Many thanks to the authors for
@@ -96,10 +98,42 @@ public class ROVER_07 {
 
 		boolean goingSouth = false;
 		boolean blocked = false;
-
 		Coord currentLoc = null;
 
-		// start Rover controller process
+		Coord startLoc;
+		Coord targetLoc;
+
+		/**
+		 *  Get initial values that won't change
+		 */
+		// get EQUIPMENT			
+		ArrayList<String> equipment = getEquipment();
+		System.out.println(ROVER_NAME + " equipment list results " + equipment + "\n");
+		
+		// get START_LOC
+		out.println("START_LOC");
+		line = in.readLine();
+        if (line == null) {
+        	System.out.println(ROVER_NAME + " check connection to server");
+        	line = "";
+        }
+		if (line.startsWith("START_LOC")) {
+			startLoc = Parser.extractLocation(line);
+			System.out.println(ROVER_NAME + " START_LOC " + startLoc);
+		}
+		
+		// get TARGET_LOC
+		out.println("TARGET_LOC");
+		line = in.readLine();
+        if (line == null) {
+        	System.out.println(ROVER_NAME + " check connection to server");
+        	line = "";
+        }
+		if (line.startsWith("TARGET_LOC")) {
+			targetLoc = Parser.extractLocation(line);
+			System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
+		}
+		
 		while (true) {
 			// currently the requirements allow sensor calls to be made with no
 			// simulated resource cost
@@ -112,16 +146,9 @@ public class ROVER_07 {
             	line = "";
             }
 			if (line.startsWith("LOC")) {
-				currentLoc = extractLOC(line);
+				currentLoc = Parser.extractLocation(line);
 			}
 			System.out.println("ROVER_07 currentLoc at start: " + currentLoc);
-
-
-
-			// **** get equipment listing ****			
-			ArrayList<String> equipment = new ArrayList<String>();
-			equipment = getEquipment();
-			System.out.println("ROVER_07 equipment list results " + equipment + "\n");
 
 
 
@@ -189,7 +216,7 @@ public class ROVER_07 {
 				line = "";
 			}
 			if (line.startsWith("LOC")) {
-				currentLoc = extractLOC(line);
+				currentLoc = Parser.extractLocation(line);
 			}
 
 			//System.out.println("ROVER_07 currentLoc after recheck: " + currentLoc);
@@ -281,19 +308,6 @@ public class ROVER_07 {
 
 		// convert from the json string back to a ScanMap object
 		scanMap = gson.fromJson(jsonScanMapString, ScanMap.class);		
-	}
-
-	// this takes the LOC response string, parses out the x and x values and
-	// returns a Coord object
-	public static Coord extractLOC(String sStr) {
-		sStr = sStr.substring(4); // consume "LOC "
-		int spaceIdx = sStr.lastIndexOf(" ");
-		if (spaceIdx != -1) {
-			String xStr = sStr.substring(0, spaceIdx);
-			String yStr = sStr.substring(spaceIdx + 1);
-			return new Coord(Integer.parseInt(xStr), Integer.parseInt(yStr));
-		}
-		return null;
 	}
 
 
