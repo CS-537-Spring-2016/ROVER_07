@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 import common.Coord;
 
 public final class Parser {
-	private static Pattern locationRegex = Pattern.compile("(?:.*?)LOC\\s+(\\d+)\\s+(\\d+)");
+	private static Pattern locationRegex = Pattern.compile("\\S*LOC\\s+(\\d+)\\s+(\\d+)");
 	
 	public static Coord extractLocation(String str) {
-		Matcher matcher = locationRegex.matcher(str);
+		Matcher matcher = locationRegex.matcher(str.trim());
 		if (!matcher.matches()) return null;
 		MatchResult res = matcher.toMatchResult();
 		System.out.println("loc = '" + res.group(1) + "' '" + res.group(2) + "'");
