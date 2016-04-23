@@ -96,7 +96,7 @@ public class ROVER_07 {
 	private void mainLoop() throws IOException, InterruptedException {
 		String line;
 
-		boolean goingSouth = false;
+		boolean goingSouth = true;
 		boolean blocked = false;
 		Coord currentLoc = null;
 
