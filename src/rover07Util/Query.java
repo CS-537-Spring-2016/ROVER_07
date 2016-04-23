@@ -13,6 +13,9 @@ import common.ScanMap;
 import enums.Science;
 
 public class Query {
+	/**
+	 * Specifies which location to request in {@link Query#getLoc(LocType)}.
+	 */
 	public enum LocType {
 		HERE("LOC"),
 		START("START_LOC"),
@@ -39,10 +42,22 @@ public class Query {
 		this.gson = gson;
 	}
 	
+	/**
+	 * Clears the input buffer. Intended to be used when there was an unexpected
+	 * reply.
+	 * @throws IOException
+	 */
 	private void flush() throws IOException {
 		while (in.ready()) in.readLine();
 	}
 
+	/**
+	 * Sends a command over the wire and expects the first line of the reply
+	 * to begin with the same command.
+	 * @param command
+	 * @return The full line of the response, or null if the reply didn't match.
+	 * @throws IOException
+	 */
 	private String sendAndGetReply(String command) throws IOException {
 		out.println(command);
 		String reply = in.readLine();
