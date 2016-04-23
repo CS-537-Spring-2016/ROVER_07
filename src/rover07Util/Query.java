@@ -42,19 +42,23 @@ public class Query {
 	private void flush() throws IOException {
 		while (in.ready()) in.readLine();
 	}
-	
-	public ArrayList<String> getEquipment() throws IOException {
-		//System.out.println("ROVER_07 method getEquipment()");
-		out.println("EQUIPMENT");
 
-		String jsonEqListIn = in.readLine(); // get first reply
-		if (jsonEqListIn == null || !jsonEqListIn.startsWith("EQUIPMENT")) {
-			// if no match, bail
+	private String sendAndGetReply(String command) throws IOException {
+		out.println(command);
+		String reply = in.readLine();
+		if (reply == null || !reply.startsWith(command)) {
 			flush();
 			return null;
 		}
+		return reply;
+	}
+	
+	public ArrayList<String> getEquipment() throws IOException {
+		//System.out.println("ROVER_07 method getEquipment()");
+		if (sendAndGetReply("EQUIPMENT") == null) return null;
 
 		// start building string of json data
+		String jsonEqListIn;
 		StringBuilder jsonEqList = new StringBuilder();
 		while (!(jsonEqListIn = in.readLine()).equals("EQUIPMENT_END")) {
 			jsonEqList.append(jsonEqListIn);
@@ -69,28 +73,16 @@ public class Query {
 	}
 	
 	public Coord getLoc(LocType type) throws IOException {
-		out.println(type.getCommand());
-		
-		String line = in.readLine();
-        if (line == null || !line.startsWith(type.getCommand())) {
-        	flush();
-        	return null;
-        }
-        
+		String line = sendAndGetReply(type.getCommand());
+		if (line == null) return null;
 		return Parser.extractLocation(line);
 	}
 
 	public ScanMap getScan() throws IOException {
-		out.println("SCAN");
-
-		String jsonScanMapIn = in.readLine(); // get first reply
-		if (jsonScanMapIn == null || !jsonScanMapIn.startsWith("SCAN")){
-			// if no match, bail
-			flush();
-			return null;
-		}
+		if (sendAndGetReply("SCAN") == null) return null;
 
 		// start building string of json data
+		String jsonScanMapIn;
 		StringBuilder jsonScanMap = new StringBuilder();	
 		while (!(jsonScanMapIn = in.readLine()).equals("SCAN_END")) {
 			jsonScanMap.append(jsonScanMapIn);
@@ -101,16 +93,10 @@ public class Query {
 	}
 	
 	public ArrayList<Science> getCargo() throws IOException {
-		out.println("CARGO");
-
-		String jsonCargoListIn = in.readLine(); // get first reply
-		if (jsonCargoListIn == null || !jsonCargoListIn.startsWith("CARGO")){
-			// if no match, bail
-			flush();
-			return null;
-		}
+		if (sendAndGetReply("CARGO") == null) return null;
 
 		// start building string of json data
+		String jsonCargoListIn;
 		StringBuilder jsonCargoList = new StringBuilder();	
 		while (!(jsonCargoListIn = in.readLine()).equals("CARGO_END")) {
 			jsonCargoList.append(jsonCargoListIn);
