@@ -192,8 +192,7 @@ public class ROVER_00 {
 					blocked = false;
 					//reverses direction after being blocked
 					goingSouth = !goingSouth;
-				} else {
-	
+				} else {	
 					// pull the MapTile array out of the ScanMap object
 					MapTile[][] scanMapTiles = scanMap.getScanMap();
 					int centerIndex = (scanMap.getEdgeSize() - 1)/2;
@@ -246,7 +245,7 @@ public class ROVER_00 {
 				// test for stuckness
 				stuck = currentLoc.equals(previousLoc);
 	
-				//System.out.println("ROVER_00 stuck test " + stuck);
+				System.out.println("ROVER_00 stuck test " + stuck);
 				System.out.println("ROVER_00 blocked test " + blocked);
 	
 				// TODO - logic to calculate where to move next
