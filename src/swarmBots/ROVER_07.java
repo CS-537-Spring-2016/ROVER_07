@@ -198,8 +198,8 @@ public class ROVER_07 {
 
 
 			Thread.sleep(sleepTime);
-
-			System.out.println("ROVER_07 ------------ bottom process control --------------"); 
+//			q.doGather()
+			System.out.println("ROVER_07 ------------ bottom process control --------------");
 		}
 	}
 
