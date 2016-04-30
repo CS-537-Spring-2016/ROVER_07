@@ -289,6 +289,11 @@ public class ROVER_07 {
 		// save parsed result
 		scanMap = gson.fromJson(jsonScanMap.toString(), ScanMap.class);
 	}
+	
+	public String locationOfStuckRover(Integer start,Integer end){
+		
+		return "";
+	}
 
 
 
