@@ -17,6 +17,7 @@ import common.ScanMap;
 import enums.Terrain;
 
 import rover07Util.Parser;
+import rover07Util.Query;
 
 /**
  * The seed that this program is built on is a chat program example found here:
@@ -34,6 +35,7 @@ public class ROVER_07 {
 	// io
 	BufferedReader in;
 	PrintWriter out;
+	Query q;
 
 	// rover vars
 	Gson gson;
@@ -66,6 +68,8 @@ public class ROVER_07 {
 		Socket socket = new Socket(SERVER_ADDRESS, PORT_ADDRESS);
 		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		out = new PrintWriter(socket.getOutputStream(), true);
+		
+		q = new Query(in, out, gson);
 
 		// Process all messages from server, wait until server requests Rover ID name
 		while (true) {
@@ -101,6 +105,7 @@ public class ROVER_07 {
 		boolean blocked = false;
 		Coord currentLoc = null;
 
+		ArrayList<String> equipment;
 		Coord startLoc;
 		Coord targetLoc;
 
@@ -108,54 +113,30 @@ public class ROVER_07 {
 		 *  Get initial values that won't change
 		 */
 		// get EQUIPMENT			
-		ArrayList<String> equipment = getEquipment();
+		equipment = q.getEquipment();
 		System.out.println(ROVER_NAME + " equipment list results " + equipment + "\n");
 		
 		// get START_LOC
-		out.println("START_LOC");
-		line = in.readLine();
-        if (line == null) {
-        	System.out.println(ROVER_NAME + " check connection to server");
-        	line = "";
-        }
-		if (line.startsWith("START_LOC")) {
-			startLoc = Parser.extractLocation(line);
-			System.out.println(ROVER_NAME + " START_LOC " + startLoc);
-		}
+		startLoc = q.getLoc(Query.LocType.START);
+		System.out.println(ROVER_NAME + " START_LOC " + startLoc);
 		
 		// get TARGET_LOC
-		out.println("TARGET_LOC");
-		line = in.readLine();
-        if (line == null) {
-        	System.out.println(ROVER_NAME + " check connection to server");
-        	line = "";
-        }
-		if (line.startsWith("TARGET_LOC")) {
-			targetLoc = Parser.extractLocation(line);
-			System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
-		}
+		targetLoc = q.getLoc(Query.LocType.TARGET);
+		System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
 		
 		while (true) {
 			// currently the requirements allow sensor calls to be made with no
 			// simulated resource cost
 
 			// **** location call ****
-			out.println("LOC");
-			line = in.readLine();
-            if (line == null) {
-            	System.out.println("ROVER_07 check connection to server");
-            	line = "";
-            }
-			if (line.startsWith("LOC")) {
-				currentLoc = Parser.extractLocation(line);
-			}
+			currentLoc = q.getLoc();
 			System.out.println("ROVER_07 currentLoc at start: " + currentLoc);
 
 
 
 			// ***** do a SCAN *****
 			//System.out.println("ROVER_07 sending SCAN request");
-			this.doScan();
+			scanMap = q.getScan();
 			scanMap.debugPrintMap();
 
 
@@ -164,7 +145,7 @@ public class ROVER_07 {
 			// try moving east 5 block if blocked
 			if (blocked) {
 				for (int i = 0; i < 5; i++) {
-					out.println("MOVE E");
+					q.doMove("E");
 					//System.out.println("ROVER_07 request move E");
 					Thread.sleep(300);
 				}
@@ -187,7 +168,7 @@ public class ROVER_07 {
 						blocked = true;
 					} else {
 						// request to server to move
-						out.println("MOVE S");
+						q.doMove("S");
 						//System.out.println("ROVER_07 request move S");
 					}
 					
@@ -203,22 +184,14 @@ public class ROVER_07 {
 						blocked = true;
 					} else {
 						// request to server to move
-						out.println("MOVE N");
+						q.doMove("N");
 						//System.out.println("ROVER_07 request move N");
 					}					
 				}
 			}
 
 			// another call for current location
-			out.println("LOC");
-			line = in.readLine();
-			if (line == null) {
-				System.out.println("ROVER_07 check connection to server");
-				line = "";
-			}
-			if (line.startsWith("LOC")) {
-				currentLoc = Parser.extractLocation(line);
-			}
+			currentLoc = q.getLoc();
 
 			//System.out.println("ROVER_07 currentLoc after recheck: " + currentLoc);
 
@@ -236,58 +209,6 @@ public class ROVER_07 {
 	}
 
 	// ################ Support Methods ###########################
-
-	private void clearReadLineBuffer() throws IOException{
-		while (in.ready()) {
-			in.readLine();	
-		}
-	}
-
-	// method to retrieve a list of the rover's equipment from the server
-	private ArrayList<String> getEquipment() throws IOException {
-		//System.out.println("ROVER_07 method getEquipment()");
-		out.println("EQUIPMENT");
-
-		String jsonEqListIn = in.readLine(); // get first reply
-		if (jsonEqListIn == null || !jsonEqListIn.startsWith("EQUIPMENT")) {
-			// if no match, bail
-			clearReadLineBuffer();
-			return null;
-		}
-
-		// start building string of json data
-		StringBuilder jsonEqList = new StringBuilder();
-		while (!(jsonEqListIn = in.readLine()).equals("EQUIPMENT_END")) {
-			jsonEqList.append(jsonEqListIn);
-		}
-
-		// return parsed result
-		return gson.fromJson(jsonEqList.toString(), new TypeToken<ArrayList<String>>(){}.getType());
-	}
-
-	// sends a SCAN request to the server and puts the result in the scanMap array
-	public void doScan() throws IOException {
-		//System.out.println("ROVER_07 method doScan()");
-		out.println("SCAN");
-
-		String jsonScanMapIn = in.readLine(); // get first reply
-		if (jsonScanMapIn == null || !jsonScanMapIn.startsWith("SCAN")){
-			// if no match, bail
-			clearReadLineBuffer();
-			return;
-		}
-
-		// start building string of json data
-		StringBuilder jsonScanMap = new StringBuilder();	
-		while (!(jsonScanMapIn = in.readLine()).equals("SCAN_END")) {
-			jsonScanMap.append(jsonScanMapIn);
-		}
-
-		// save parsed result
-		scanMap = gson.fromJson(jsonScanMap.toString(), ScanMap.class);
-	}
-
-
 
 	/**
 	 * Runs the client
