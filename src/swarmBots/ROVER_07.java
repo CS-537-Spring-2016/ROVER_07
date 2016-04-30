@@ -9,14 +9,12 @@ import java.util.ArrayList;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import common.Coord;
 import common.MapTile;
 import common.ScanMap;
 import enums.Terrain;
 
-import rover07Util.Parser;
 import rover07Util.Query;
 
 /**
@@ -30,7 +28,6 @@ public class ROVER_07 {
 	final String ROVER_NAME = "ROVER_07";
 	String SERVER_ADDRESS = "localhost";
 	final int PORT_ADDRESS = 9537;
-	final int SERVER_ID = 8087; //this is add for nothing
 
 	// io
 	BufferedReader in;
@@ -99,8 +96,6 @@ public class ROVER_07 {
 	 * Main rover logic
 	 */
 	private void mainLoop() throws IOException, InterruptedException {
-		String line;
-
 		boolean goingSouth = true;
 		boolean blocked = false;
 		Coord currentLoc = null;
