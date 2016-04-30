@@ -291,7 +291,8 @@ public class ROVER_07 {
 	}
 	
 	public String locationOfStuckRover(Integer start,Integer end){
-		
+		Integer x = start;
+		Integer y = end;
 		return "";
 	}
 
