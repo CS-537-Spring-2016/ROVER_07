@@ -181,6 +181,7 @@ public class ROVER_07 {
 				if (goingSouth) {
 					// check scanMap to see if path is blocked to the south
 					// (scanMap may be old data by now)
+					//prevent from sand
 					if (scanMapTiles[centerIndex][centerIndex +1].getHasRover() 
 							|| scanMapTiles[centerIndex][centerIndex -1].getTerrain() == Terrain.SAND
 							|| scanMapTiles[centerIndex][centerIndex +1].getTerrain() == Terrain.ROCK
@@ -197,7 +198,7 @@ public class ROVER_07 {
 					// (scanMap may be old data by now)
 					//System.out.println("ROVER_07 scanMapTiles[2][1].getHasRover() " + scanMapTiles[2][1].getHasRover());
 					//System.out.println("ROVER_07 scanMapTiles[2][1].getTerrain() " + scanMapTiles[2][1].getTerrain().toString());
-					
+					//prevent from sand
 					if (scanMapTiles[centerIndex][centerIndex -1].getHasRover()
 							|| scanMapTiles[centerIndex][centerIndex -1].getTerrain() == Terrain.SAND
 							|| scanMapTiles[centerIndex][centerIndex -1].getTerrain() == Terrain.ROCK
