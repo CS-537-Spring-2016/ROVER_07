@@ -29,7 +29,7 @@ public class ROVER_07 {
 	String SERVER_ADDRESS = "localhost";
 	final int PORT_ADDRESS = 9537;
 
-	// IO
+	// io
 	BufferedReader in;
 	PrintWriter out;
 	Query q;
