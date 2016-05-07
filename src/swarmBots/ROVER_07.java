@@ -99,6 +99,8 @@ public class ROVER_07 {
 		boolean goingSouth = true;
 		boolean goingEast = true;
 		boolean primaryDirection = true; // primary = N/S, secondary = E/W
+		int sideMovement = 5;
+		Coord lastLoc = null;
 		Coord currentLoc = null;
 
 		ArrayList<String> equipment;
@@ -126,7 +128,13 @@ public class ROVER_07 {
 
 			// **** do a LOC ****
 			currentLoc = q.getLoc();
-			System.out.println("ROVER_07 currentLoc at start: " + currentLoc);
+			System.out.println("ROVER_07 current location: " + currentLoc);
+			
+			if (lastLoc != null) {
+				if (currentLoc.xpos != lastLoc.xpos || currentLoc.ypos != lastLoc.ypos) {
+					sideMovement--; // TODO fix misleading var name
+				}
+			}
 
 
 
@@ -170,6 +178,11 @@ public class ROVER_07 {
 					|| tileW.getTerrain() == Terrain.ROCK
 					|| tileW.getTerrain() == Terrain.NONE;
 			
+			if (!primaryDirection && sideMovement <= 0) {
+				// reset after moving sideways 5 blocks
+				primaryDirection = true;
+				goingSouth = true;
+			}
 			if (primaryDirection) {
 				if ((goingSouth && cannotMoveS) || (!goingSouth && cannotMoveN)) {
 					if (cannotMoveE && cannotMoveW) {
@@ -177,6 +190,7 @@ public class ROVER_07 {
 					} else {
 						primaryDirection = false;
 						goingEast = !cannotMoveE;
+						sideMovement = 5;
 					}
 				}
 			} else {
@@ -205,6 +219,8 @@ public class ROVER_07 {
 				}
 			}
 
+			// repeat
+			lastLoc = currentLoc;
 			Thread.sleep(sleepTime);
 			System.out.println("ROVER_07 ------------ bottom process control --------------");
 		}
