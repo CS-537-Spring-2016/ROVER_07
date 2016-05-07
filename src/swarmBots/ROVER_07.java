@@ -97,7 +97,8 @@ public class ROVER_07 {
 	 */
 	private void mainLoop() throws IOException, InterruptedException {
 		boolean goingSouth = true;
-		boolean blocked = false;
+		boolean goingEast = true;
+		boolean primaryDirection = true; // primary = N/S, secondary = E/W
 		Coord currentLoc = null;
 
 		ArrayList<String> equipment;
@@ -123,7 +124,7 @@ public class ROVER_07 {
 			// currently the requirements allow sensor calls to be made with no
 			// simulated resource cost
 
-			// **** location call ****
+			// **** do a LOC ****
 			currentLoc = q.getLoc();
 			System.out.println("ROVER_07 currentLoc at start: " + currentLoc);
 
@@ -136,66 +137,68 @@ public class ROVER_07 {
 
 
 
-			// ***** MOVING *****
-			// try moving east 5 block if blocked
-			if (blocked) {
-				for (int i = 0; i < 5; i++) {
-					q.doMove("E");
-					//System.out.println("ROVER_07 request move E");
-					Thread.sleep(300);
-				}
-				blocked = false;
-				//reverses direction after being blocked
-				goingSouth = !goingSouth;
-			} else {
-
-				// pull the MapTile array out of the ScanMap object
-				MapTile[][] scanMapTiles = scanMap.getScanMap();
-				int centerIndex = (scanMap.getEdgeSize() - 1)/2;
-				// tile S = y + 1; N = y - 1; E = x + 1; W = x - 1
-
-				if (goingSouth) {
-					// check scanMap to see if path is blocked to the south
-					// (scanMap may be old data by now)
-					if (scanMapTiles[centerIndex][centerIndex +1].getHasRover() 
-							|| scanMapTiles[centerIndex][centerIndex +1].getTerrain() == Terrain.ROCK
-							|| scanMapTiles[centerIndex][centerIndex +1].getTerrain() == Terrain.NONE) {
-						blocked = true;
+			// ***** move *****
+			// pull the MapTile array out of the ScanMap object
+			MapTile[][] scanMapTiles = scanMap.getScanMap();
+			int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
+			
+			
+			// TODO move to util method
+			MapTile tileN = scanMapTiles[centerIndex][centerIndex - 1];
+			MapTile tileS = scanMapTiles[centerIndex][centerIndex + 1];
+			MapTile tileE = scanMapTiles[centerIndex + 1][centerIndex];
+			MapTile tileW = scanMapTiles[centerIndex - 1][centerIndex];
+			
+			boolean cannotMoveN = tileN.getHasRover() 
+					|| tileN.getTerrain() == Terrain.ROCK
+					|| tileN.getTerrain() == Terrain.NONE;
+			
+			boolean cannotMoveS = tileS.getHasRover() 
+					|| tileS.getTerrain() == Terrain.ROCK
+					|| tileS.getTerrain() == Terrain.NONE;
+			
+			boolean cannotMoveE = tileE.getHasRover() 
+					|| tileE.getTerrain() == Terrain.ROCK
+					|| tileE.getTerrain() == Terrain.NONE;
+			
+			boolean cannotMoveW = tileW.getHasRover() 
+					|| tileW.getTerrain() == Terrain.ROCK
+					|| tileW.getTerrain() == Terrain.NONE;
+			
+			if (primaryDirection) {
+				if ((goingSouth && cannotMoveS) || (!goingSouth && cannotMoveN)) {
+					if (cannotMoveE && cannotMoveW) {
+						goingSouth = !cannotMoveS;
 					} else {
-						// request to server to move
-						q.doMove("S");
-						//System.out.println("ROVER_07 request move S");
+						primaryDirection = false;
+						goingEast = !cannotMoveE;
 					}
-					
-				} else {
-					// check scanMap to see if path is blocked to the north
-					// (scanMap may be old data by now)
-					//System.out.println("ROVER_07 scanMapTiles[2][1].getHasRover() " + scanMapTiles[2][1].getHasRover());
-					//System.out.println("ROVER_07 scanMapTiles[2][1].getTerrain() " + scanMapTiles[2][1].getTerrain().toString());
-					
-					if (scanMapTiles[centerIndex][centerIndex -1].getHasRover() 
-							|| scanMapTiles[centerIndex][centerIndex -1].getTerrain() == Terrain.ROCK
-							|| scanMapTiles[centerIndex][centerIndex -1].getTerrain() == Terrain.NONE) {
-						blocked = true;
+				}
+			} else {
+				if ((goingEast && cannotMoveE) || (!goingEast && cannotMoveW)) {
+					if (cannotMoveN && cannotMoveS) {
+						goingEast = !cannotMoveE;
 					} else {
-						// request to server to move
-						q.doMove("N");
-						//System.out.println("ROVER_07 request move N");
-					}					
+						primaryDirection = true;
+						goingSouth = !cannotMoveS;
+					}
 				}
 			}
-
-			// another call for current location
-			currentLoc = q.getLoc();
-
-			//System.out.println("ROVER_07 currentLoc after recheck: " + currentLoc);
-
-			//System.out.println("ROVER_07 stuck test " + stuck);
-			System.out.println("ROVER_07 blocked test " + blocked);
-
-			// TODO - logic to calculate where to move next
-
-
+			
+			// send movement
+			if (primaryDirection) {
+				if (goingSouth) {
+					q.doMove("S");
+				} else {
+					q.doMove("N");
+				}
+			} else {
+				if (goingEast) {
+					q.doMove("E");
+				} else {
+					q.doMove("W");
+				}
+			}
 
 			Thread.sleep(sleepTime);
 //			q.doGather()
