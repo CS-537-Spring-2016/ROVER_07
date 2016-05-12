@@ -19,7 +19,7 @@ import java.util.*;
 public class ServerThread extends Thread {
     private Selector selector;
     private ByteBuffer buffer;
-    private Set<String> received;
+    private Set<String> received; // TODO set contains no duplicates; this should be documented if it is to stay
     private final Set<SelectionKey> keysToWrite;
     private final Set<RoverSocket> socketsToRegister;
     private final Set<RoverName> roversToConnect;
