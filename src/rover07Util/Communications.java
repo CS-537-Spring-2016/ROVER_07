@@ -1,5 +1,7 @@
 package rover07Util;
 
+import enums.RoverName;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -10,9 +12,12 @@ public class Communications implements Runnable {
     private Selector selector;
     private ByteBuffer buffer;
     private Set<String> received;
-    private Set<SelectionKey> keysToWrite;
+    private final Set<SelectionKey> keysToWrite;
+    private final Set<RoverSocket> socketsToRegister;
+    private final Set<RoverName> roversToConnect;
 
     private ServerSocketChannel serverSocket;
+    private final Thread connectionThread;
 
     private final boolean DEBUG = true;
     private final String DEBUG_PREFIX = "[Communications] ";
@@ -21,34 +26,122 @@ public class Communications implements Runnable {
             System.out.println(DEBUG_PREFIX + str);
         }
     }
+    private void err(String str) {
+        System.err.println(DEBUG_PREFIX + str);
+    }
 
     private class SocketIO {
+        public RoverName rover;
         public StringBuilder in;
         public List<ByteBuffer> out;
 
         SocketIO() {
+            rover = null;
             in = new StringBuilder();
             out = Collections.synchronizedList(new ArrayList<>());
         }
+
+        SocketIO(RoverName rover) {
+            this();
+            this.rover = rover;
+        }
     }
 
-    public Communications() throws IOException {
+    private class RoverSocket {
+        public RoverName rover;
+        public SocketChannel socket;
+
+        RoverSocket(RoverName rover, SocketChannel socket) {
+            this.rover = rover;
+            this.socket = socket;
+        }
+    }
+
+    public Communications(RoverName rover) throws IOException {
+        final int serverPort = RoverPorts.getPort(rover);
+        roversToConnect = RoverPorts.getRovers();
+        roversToConnect.remove(rover);
+        socketsToRegister = Collections.synchronizedSet(new HashSet<>());
+
         selector = Selector.open();
         buffer = ByteBuffer.allocateDirect(64);
         received = Collections.synchronizedSet(new HashSet<>());
         keysToWrite = new HashSet<>();
 
         serverSocket = ServerSocketChannel.open();
-        serverSocket.bind(new InetSocketAddress("127.0.0.1", 53707));
+        serverSocket.bind(new InetSocketAddress("127.0.0.1", serverPort));
         serverSocket.configureBlocking(false);
         serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
         log("listening on " + serverSocket.getLocalAddress());
+
+        connectionThread = new Thread(new Runnable() {
+            private int retryDelay = 250;
+            private int retryAttempts = 0;
+
+            @Override
+            public void run() {
+                while (true) {
+                    log("trying to connect to rovers...");
+                    synchronized (roversToConnect) {
+                        while (roversToConnect.isEmpty()) {
+                            try {
+                                roversToConnect.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        final Iterator<RoverName> iter = roversToConnect.iterator();
+                        while (iter.hasNext()) {
+                            final RoverName rover = iter.next();
+                            final InetSocketAddress address = new InetSocketAddress("127.0.0.1", RoverPorts.getPort(rover));
+                            SocketChannel socket;
+                            try {
+                                socket = SocketChannel.open();
+                                socket.configureBlocking(false);
+                                socket.connect(address);
+                                log("attempting " + address);
+                            } catch (IOException e) {
+                                err("failed to connect to " + rover.name() + ": " + e.getMessage());
+                                continue;
+                            }
+
+                            socketsToRegister.add(new RoverSocket(rover, socket));
+                            iter.remove();
+                        }
+                    }
+                    selector.wakeup();
+                    try {
+                        log("sleeping for " + retryDelay);
+                        Thread.sleep(retryDelay);
+                        if (retryAttempts < 5) {
+                            retryDelay *= 2;
+                            retryAttempts++;
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            }
+        });
+        connectionThread.start();
     }
 
     @Override
     public void run() {
         while (true) {
+            synchronized (socketsToRegister) {
+                for (RoverSocket roverSocket : socketsToRegister) {
+                    try {
+                        roverSocket.socket.register(selector, SelectionKey.OP_CONNECT, new SocketIO(roverSocket.rover));
+                    } catch (ClosedChannelException e) {
+                        e.printStackTrace();
+                    }
+                }
+                socketsToRegister.clear();
+            }
+
             synchronized (keysToWrite) {
                 for (SelectionKey key : keysToWrite) {
                     key.interestOps(SelectionKey.OP_WRITE);
@@ -59,6 +152,7 @@ public class Communications implements Runnable {
             try {
                 selector.select(); // blocks until wakeup()
             } catch (IOException e) {
+                err("IOException in select(): " + e.getMessage());
                 break; // TODO
             }
 
@@ -72,6 +166,8 @@ public class Communications implements Runnable {
                 try {
                     if (key.isAcceptable()) {
                         accept(key);
+                    } else if (key.isConnectable()) {
+                        connect(key);
                     } else if (key.isReadable()) {
                         read(key);
                     } else if (key.isWritable()) {
@@ -85,6 +181,17 @@ public class Communications implements Runnable {
                     } catch (IOException e2) {
                     }
                     key.cancel();
+
+                    SocketIO io = (SocketIO)key.attachment();
+                    if (io.rover != null) {
+                        roversToConnect.add(io.rover);
+                    }
+                }
+            }
+
+            synchronized (roversToConnect) {
+                if (!roversToConnect.isEmpty()) {
+                    roversToConnect.notify();
                 }
             }
         }
@@ -95,6 +202,13 @@ public class Communications implements Runnable {
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ, new SocketIO());
         log("accepted connection from " + client);
+    }
+
+    private void connect(SelectionKey key) throws IOException {
+        SocketChannel client = (SocketChannel)key.channel();
+        client.finishConnect();
+        key.interestOps(SelectionKey.OP_READ);
+        log("successfully connected to " + client);
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -186,7 +300,9 @@ public class Communications implements Runnable {
 
     public static void main(String[] args) {
         try {
-            Communications test = new Communications();
+            Communications test = new Communications(RoverName.ROVER_07);
+            Thread task = new Thread(test);
+            task.start();
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
