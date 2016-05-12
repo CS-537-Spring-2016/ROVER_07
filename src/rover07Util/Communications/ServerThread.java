@@ -8,7 +8,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
 
-public class ServerThread implements Runnable {
+/**
+ * Runs the server socket and handles all socket I/O.
+ *
+ * Strings sent via send() are broadcast to all currently connected sockets, and all lines received from any socket
+ * will be added to a buffer that is returned and cleared on calling getReceiveQueue().
+ *
+ * @author Michael Fong (meishuu)
+ */
+public class ServerThread extends Thread {
     private Selector selector;
     private ByteBuffer buffer;
     private Set<String> received;
@@ -16,13 +24,10 @@ public class ServerThread implements Runnable {
     private final Set<RoverSocket> socketsToRegister;
     private final Set<RoverName> roversToConnect;
 
-    private ServerSocketChannel serverSocket;
-    private final Thread connectionThread;
-
-    private final boolean DEBUG = true;
+    private final int DEBUG_LEVEL = 1;
     private final String DEBUG_PREFIX = "[ServerThread] ";
-    private void log(String str) {
-        if (DEBUG) {
+    private void log(int level, String str) {
+        if (level <= DEBUG_LEVEL) {
             System.out.println(DEBUG_PREFIX + str);
         }
     }
@@ -41,33 +46,35 @@ public class ServerThread implements Runnable {
         received = Collections.synchronizedSet(new HashSet<>());
         keysToWrite = new HashSet<>();
 
-        serverSocket = ServerSocketChannel.open();
+        final ServerSocketChannel serverSocket = ServerSocketChannel.open();
         serverSocket.bind(new InetSocketAddress("127.0.0.1", serverPort));
         serverSocket.configureBlocking(false);
         serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
-        log("listening on " + serverSocket.getLocalAddress());
+        log(1, "listening on " + serverSocket.getLocalAddress());
 
-        connectionThread = new ConnectionThread(selector, socketsToRegister, roversToConnect);
+        final Thread connectionThread = new ConnectionThread(selector, socketsToRegister, roversToConnect);
         connectionThread.start();
     }
 
     @Override
     public void run() {
         while (true) {
+            // register new outgoing sockets with OP_CONNECT
             synchronized (socketsToRegister) {
                 for (RoverSocket roverSocket : socketsToRegister) {
+                    final SocketChannel socket = roverSocket.getSocket();
+                    final RoverName rover = roverSocket.getRover();
                     try {
-                        final SocketChannel socket = roverSocket.getSocket();
-                        final RoverName rover = roverSocket.getRover();
                         socket.register(selector, SelectionKey.OP_CONNECT, new SocketIO(rover));
                     } catch (ClosedChannelException e) {
-                        e.printStackTrace();
+                        err(rover + " ClosedChannelException: " + e.getMessage());
                     }
                 }
                 socketsToRegister.clear();
             }
 
+            // switch selected keys from OP_READ to OP_WRITE
             synchronized (keysToWrite) {
                 for (SelectionKey key : keysToWrite) {
                     key.interestOps(SelectionKey.OP_WRITE);
@@ -75,21 +82,27 @@ public class ServerThread implements Runnable {
                 keysToWrite.clear();
             }
 
+            // select
             try {
                 selector.select(); // blocks until wakeup()
             } catch (IOException e) {
                 err("IOException in select(): " + e.getMessage());
-                break; // TODO
+                break; // TODO how to handle this?
             }
 
+            // iterate over selected keys
+            // we don't need to synchronize this since other threads only call selector.wakeup()
             Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
             while (iter.hasNext()) {
                 SelectionKey key = iter.next();
-                iter.remove(); // remove event to avoid reprocessing
+                iter.remove(); // remove to avoid reprocessing
 
+                // if the key was invalidated, do not bother processing
                 if (!key.isValid()) continue;
 
                 try {
+                    // delegate to first matching appropriate action
+                    // note that there can only be one action anyway, since we only have one op at a time on all keys
                     if (key.isAcceptable()) {
                         accept(key);
                     } else if (key.isConnectable()) {
@@ -100,14 +113,17 @@ public class ServerThread implements Runnable {
                         write(key);
                     }
                 } catch (IOException e) {
-                    log("closing socket " + key.channel());
-                    log("- reason: " + e.getMessage());
+                    // if we had an IOException, close the connection and invalidate the key
+                    log(1, "closing socket " + key.channel());
+                    log(1, "- reason: " + e.getMessage());
                     try {
                         key.channel().close(); // TODO is this needed?
                     } catch (IOException e2) {
                     }
                     key.cancel();
 
+                    // if there was a rover attached to this key, re-add it to the roversToConnect set so we know to
+                    // retry a connection to that rover
                     SocketIO io = (SocketIO)key.attachment();
                     if (io.getRover() != null) {
                         roversToConnect.add(io.getRover());
@@ -115,26 +131,30 @@ public class ServerThread implements Runnable {
                 }
             }
 
+            // wake connectionThread if we still have rovers to attempt connections to;
+            // synchronization is needed to obtain ownership of the object's monitor
             synchronized (roversToConnect) {
                 if (!roversToConnect.isEmpty()) {
-                    roversToConnect.notify();
+                    roversToConnect.notify(); // wakes connectionThread if it's asleep
                 }
             }
         }
     }
 
     private void accept(SelectionKey key) throws IOException {
-        SocketChannel client = serverSocket.accept();
+        ServerSocketChannel serverSocketChannel = (ServerSocketChannel)key.channel();
+        SocketChannel client = serverSocketChannel.accept();
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ, new SocketIO());
-        log("accepted connection from " + client);
+        log(1, "accepted connection from " + client);
     }
 
     private void connect(SelectionKey key) throws IOException {
         SocketChannel client = (SocketChannel)key.channel();
-        client.finishConnect();
-        key.interestOps(SelectionKey.OP_READ);
-        log("successfully connected to " + client);
+        if (client.finishConnect()) { // should always be true after OP_CONNECT; throws IOException on fail
+            key.interestOps(SelectionKey.OP_READ);
+            log(1, "successfully connected to " + client);
+        }
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -170,7 +190,7 @@ public class ServerThread implements Runnable {
 
                 // add to parsed lines for later retrieval
                 received.add(line);
-                log("received data: " + line);
+                log(2, "received data: " + line);
 
                 // remove from builder
                 in.delete(0, eol + 1);
@@ -184,39 +204,58 @@ public class ServerThread implements Runnable {
 
         List queue = io.getOut();
         synchronized (queue) {
+            // as long as we have lines to send...
             while (!queue.isEmpty()) {
-                ByteBuffer buf = (ByteBuffer) queue.get(0);
+                // get the first line in the queue
+                ByteBuffer buf = (ByteBuffer)queue.get(0);
+
+                // write it to the socket
                 client.write(buf);
+
+                // if we couldn't send all of it, break out of the loop so we can try to finish transmitting later
                 if (buf.remaining() > 0) break;
+
+                // otherwise, pop the first line off the queue
                 queue.remove(0);
             }
 
+            // if we finished flushing the queue, go back to read mode
             if (queue.isEmpty()) {
                 key.interestOps(SelectionKey.OP_READ);
             }
         }
     }
 
+    /**
+     * Adds a line to the output queue of all current sockets.
+     * @param data The string to send without a trailing newline.
+     */
     public void send(String data) {
+        // turn input string into a ByteBuffer of a line (ending with \n)
         byte[] byteData = (data + "\n").getBytes();
         ByteBuffer buf = ByteBuffer.wrap(byteData);
 
-        log("queueing data to write: " + data);
+        log(2, "queueing data to write: " + data);
 
+        // add it to the output queue of all current keys
         synchronized (keysToWrite) {
             for (SelectionKey key : selector.keys()) {
                 if (key.attachment() != null) {
                     SocketIO io = (SocketIO)key.attachment();
                     io.getOut().add(buf);
-                    keysToWrite.add(key);
+                    keysToWrite.add(key); // mark this key as needing to be switched to OP_WRITE
                 }
             }
         }
 
-        selector.wakeup();
+        selector.wakeup(); // force the select() to return
     }
 
-    public Set<String> getReceiveQueue() {
+    /**
+     * Returns and flushes an unordered collection of all lines received over all sockets.
+     * @return All lines received since the last call.
+     */
+    public Set<String> popReceiveQueue() { // TODO better name?
         Set<String> queue;
         synchronized(received) {
             queue = new HashSet<>(received);
@@ -225,11 +264,13 @@ public class ServerThread implements Runnable {
         return queue;
     }
 
+    /**
+     * ONLY FOR TESTING - Spawns an instance of ServerThread.
+     */
     public static void main(String[] args) {
         try {
-            ServerThread test = new ServerThread(RoverName.ROVER_07);
-            Thread task = new Thread(test);
-            task.start();
+            ServerThread server = new ServerThread(RoverName.ROVER_07);
+            server.start();
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }

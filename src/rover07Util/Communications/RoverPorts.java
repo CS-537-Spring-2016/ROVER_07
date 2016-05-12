@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class RoverPorts {
+class RoverPorts {
     private static final Map<RoverName, Integer> mapping;
 
     static {
@@ -23,11 +23,11 @@ public class RoverPorts {
         mapping.put(RoverName.ROVER_09, 53709);
     }
 
-    public static Set<RoverName> getRovers() {
+    static Set<RoverName> getRovers() {
         return EnumSet.copyOf(mapping.keySet());
     }
 
-    public static int getPort(RoverName rover) {
+    static int getPort(RoverName rover) {
         return mapping.getOrDefault(rover, 0);
     }
 }
