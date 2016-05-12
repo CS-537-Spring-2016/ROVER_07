@@ -1,4 +1,4 @@
-package rover07Util;
+package rover07Util.Communications;
 
 import enums.RoverName;
 
