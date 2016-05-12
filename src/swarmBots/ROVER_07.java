@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,8 +14,10 @@ import com.google.gson.GsonBuilder;
 import common.Coord;
 import common.MapTile;
 import common.ScanMap;
+import enums.RoverName;
 import enums.Terrain;
 
+import rover07Util.Communications.ServerThread;
 import rover07Util.Query;
 
 /**
@@ -33,6 +36,7 @@ public class ROVER_07 {
 	BufferedReader in;
 	PrintWriter out;
 	Query q;
+	ServerThread comms;
 
 	// rover vars
 	Gson gson;
@@ -67,6 +71,10 @@ public class ROVER_07 {
 		out = new PrintWriter(socket.getOutputStream(), true);
 		
 		q = new Query(in, out, gson);
+
+		// Set up rover communications thread
+		comms = new ServerThread(RoverName.getEnum(ROVER_NAME));
+		comms.start();
 
 		// Process all messages from server, wait until server requests Rover ID name
 		while (true) {
@@ -123,6 +131,11 @@ public class ROVER_07 {
 		System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
 		
 		while (true) {
+			Set<String> commsData = comms.popReceiveQueue();
+			for (String line : commsData) {
+				System.out.println("received data from other rover: " + line);
+			}
+
 			// currently the requirements allow sensor calls to be made with no
 			// simulated resource cost
 
