@@ -17,8 +17,10 @@ import common.ScanMap;
 import enums.RoverName;
 import enums.Terrain;
 
+import rover07Util.Communications.ScienceInfo;
 import rover07Util.Communications.ServerThread;
 import rover07Util.Query;
+import rover07Util.RoverComms;
 
 /**
  * The seed that this program is built on is a chat program example found here:
@@ -36,7 +38,7 @@ public class ROVER_07 {
 	BufferedReader in;
 	PrintWriter out;
 	Query q;
-	ServerThread comms;
+	RoverComms comms;
 
 	// rover vars
 	Gson gson;
@@ -73,8 +75,7 @@ public class ROVER_07 {
 		q = new Query(in, out, gson);
 
 		// Set up rover communications thread
-		comms = new ServerThread(RoverName.getEnum(ROVER_NAME));
-		comms.start();
+		comms = new RoverComms(RoverName.getEnum(ROVER_NAME));
 
 		// Process all messages from server, wait until server requests Rover ID name
 		while (true) {
@@ -131,9 +132,12 @@ public class ROVER_07 {
 		System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
 		
 		while (true) {
-			Set<String> commsData = comms.popReceiveQueue();
-			for (String line : commsData) {
-				System.out.println("received data from other rover: " + line);
+			Set<ScienceInfo> commsData = comms.getScience();
+			if (commsData != null) {
+				for (ScienceInfo info : commsData) {
+					System.out.println("received data from other rover: " +
+							info.getTerrain() + " " + info.getScience() + " " + info.getCoord());
+				}
 			}
 
 			// currently the requirements allow sensor calls to be made with no
