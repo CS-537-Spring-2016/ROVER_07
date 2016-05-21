@@ -1,27 +1,26 @@
 package swarmBots;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.*;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import common.Coord;
 import common.MapTile;
 import common.ScanMap;
 import enums.RoverName;
 import enums.Science;
 import enums.Terrain;
-
-import rover07Util.*;
 import rover07Util.Communications.ScienceInfo;
-import rover07Util.Communications.ServerThread;
+import rover07Util.*;
 import rover07Util.Pathfinding.DStarLite;
 import rover07Util.Pathfinding.MapCell;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The seed that this program is built on is a chat program example found here:
