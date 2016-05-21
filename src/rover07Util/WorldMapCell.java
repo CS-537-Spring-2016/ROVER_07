@@ -60,4 +60,19 @@ public class WorldMapCell implements MapCell {
     public boolean isBlocked() {
         return blocked;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        WorldMapCell that = (WorldMapCell) o;
+        return (pos != null) ? pos.equals(that.pos) : (that.pos == null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (pos != null) ? pos.hashCode() : 0;
+    }
 }

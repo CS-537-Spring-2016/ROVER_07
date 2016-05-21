@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,14 +17,11 @@ import enums.RoverName;
 import enums.Science;
 import enums.Terrain;
 
+import rover07Util.*;
 import rover07Util.Communications.ScienceInfo;
 import rover07Util.Communications.ServerThread;
 import rover07Util.Pathfinding.DStarLite;
 import rover07Util.Pathfinding.MapCell;
-import rover07Util.Query;
-import rover07Util.RoverComms;
-import rover07Util.WorldMap;
-import rover07Util.WorldMapCell;
 
 /**
  * The seed that this program is built on is a chat program example found here:
@@ -115,6 +110,8 @@ public class ROVER_07 {
             System.err.println("Failed to close socket");
             e.printStackTrace();
         }
+
+        if (comms != null) comms.close();
 	}
 
 	/**
@@ -131,6 +128,7 @@ public class ROVER_07 {
 		ArrayList<String> equipment;
 		Coord startLoc;
 		Coord targetLoc;
+        Coord goal;
 
 		DStarLite pf = null;
 		List<MapCell> path = null;
@@ -152,20 +150,23 @@ public class ROVER_07 {
 
 		// build WorldMap
 		worldMap = new WorldMap(targetLoc.xpos + 10, targetLoc.ypos + 10);
+
+        // build GoalPicker
+        final GoalPicker goalPicker = new GoalPicker();
+        goal = targetLoc; // initial goal
 		
 		while (true) {
 			if (comms != null) {
 				Set<ScienceInfo> commsData = comms.getScience();
 				if (commsData != null) {
-					for (ScienceInfo info : commsData) {
-						System.out.println("received data from other rover: " +
-								info.getTerrain() + " " + info.getScience() + " " + info.getCoord());
-					}
+                    for (ScienceInfo info : commsData) {
+                        System.out.println("received data from other rover: " +
+                                info.getTerrain() + " " + info.getScience() + " " + info.getCoord());
+
+                        goalPicker.addCell(worldMap.getCell(info.getCoord()));
+                    }
 				}
 			}
-
-			// currently the requirements allow sensor calls to be made with no
-			// simulated resource cost
 
 			// **** do a LOC ****
 			currentLoc = q.getLoc();
@@ -184,33 +185,33 @@ public class ROVER_07 {
 			scanMap = q.getScan();
 			scanMap.debugPrintMap();
 
-			// merge data
-			// TODO check if we need to grow worldMap to accommodate these updates
-			boolean replan = false;
-			Set<WorldMapCell> changes = worldMap.updateMap(currentLoc, scanMap);
-			for (WorldMapCell cell : changes) {
-				final MapTile tile = cell.getTile();
-				//System.out.println("learned " + cell.getCoord() + " is " +
-				//		tile.getTerrain().getTerString() + tile.getScience().getSciString());
 
-				// check not traversable
-				if (tile.getTerrain() == Terrain.NONE || tile.getTerrain() == Terrain.ROCK) {
-					cell.setBlocked(true);
-					if (pf != null) pf.markChangedCell(cell);
-					replan = true;
-				}
 
-				// communicate science
-				if (tile.getScience() != Science.NONE) {
-					if (comms != null) {
-						comms.sendScience(new ScienceInfo(tile.getTerrain(), tile.getScience(), cell.getCoord()));
-					}
-				}
-			}
+            boolean replan = false;
 
-			if (replan && pf != null) {
-				pf.updateStart(worldMap.getCell(currentLoc));
-			}
+            // merge terrain/science changes
+            Set<WorldMapCell> changes = worldMap.updateMap(currentLoc, scanMap);
+            for (WorldMapCell cell : changes) {
+                final MapTile tile = cell.getTile();
+                //System.out.println("learned " + cell.getCoord() + " is " +
+                //		tile.getTerrain().getTerString() + tile.getScience().getSciString());
+
+                // check not traversable
+                if (tile.getTerrain() == Terrain.NONE || tile.getTerrain() == Terrain.ROCK) {
+                    cell.setBlocked(true);
+                    if (pf != null) pf.markChangedCell(cell);
+                    replan = true;
+                }
+
+                // communicate science
+                if (tile.getScience() != Science.NONE) {
+                    goalPicker.addCell(cell);
+
+                    if (comms != null) {
+                        comms.sendScience(new ScienceInfo(tile.getTerrain(), tile.getScience(), cell.getCoord()));
+                    }
+                }
+            }
 			
 			
 			
@@ -220,8 +221,16 @@ public class ROVER_07 {
 
 
 			// ***** move *****
+            Coord bestGoal = goalPicker.getClosestScience(currentLoc);
+            if (bestGoal == null) bestGoal = targetLoc;
+            if (!bestGoal.equals(goal)) {
+                System.out.println("closet science @ " + goal);
+                goal = bestGoal;
+                pf = null;
+            }
+
 			if (pf == null) {
-				pf = new DStarLite(worldMap, worldMap.getCell(currentLoc), worldMap.getCell(targetLoc));
+				pf = new DStarLite(worldMap, worldMap.getCell(currentLoc), worldMap.getCell(goal));
 				replan = true;
 			}
 
