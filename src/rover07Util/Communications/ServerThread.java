@@ -24,7 +24,7 @@ public class ServerThread extends Thread {
     private final Set<RoverSocket> socketsToRegister;
     private final Set<RoverName> roversToConnect;
 
-    private final int DEBUG_LEVEL = 1;
+    private final int DEBUG_LEVEL = 0;
     private final String DEBUG_PREFIX = "[ServerThread] ";
     private void log(int level, String str) {
         if (level <= DEBUG_LEVEL) {

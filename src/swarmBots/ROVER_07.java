@@ -225,10 +225,13 @@ public class ROVER_07 {
 			if (replan) {
 				pf.solve();
 				path = pf.getPath();
+
+				/*
 				System.out.println("--- PATH ---");
 				for (MapCell cell : path) {
 					System.out.println(new Coord(cell.getX(), cell.getY()));
 				}
+				*/
 			}
 
 			if (!path.isEmpty()) {

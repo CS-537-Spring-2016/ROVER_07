@@ -21,7 +21,7 @@ class ConnectionThread extends Thread {
     private int retryDelay = 250;
     private int retryAttempts = 0;
 
-    private final int DEBUG_LEVEL = 1;
+    private final int DEBUG_LEVEL = 0;
     private final String DEBUG_PREFIX = "[ConnectionThread] ";
     private void log(int level, String str) {
         if (level <= DEBUG_LEVEL) {
