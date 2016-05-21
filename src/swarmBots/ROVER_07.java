@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import com.google.gson.Gson;
@@ -15,12 +16,17 @@ import common.Coord;
 import common.MapTile;
 import common.ScanMap;
 import enums.RoverName;
+import enums.Science;
 import enums.Terrain;
 
 import rover07Util.Communications.ScienceInfo;
 import rover07Util.Communications.ServerThread;
+import rover07Util.Pathfinding.DStarLite;
+import rover07Util.Pathfinding.MapCell;
 import rover07Util.Query;
 import rover07Util.RoverComms;
+import rover07Util.WorldMap;
+import rover07Util.WorldMapCell;
 
 /**
  * The seed that this program is built on is a chat program example found here:
@@ -44,6 +50,7 @@ public class ROVER_07 {
 	Gson gson;
 	ScanMap scanMap;
 	int sleepTime;
+	WorldMap worldMap;
 
 	/**
 	 * Constructors
@@ -116,6 +123,9 @@ public class ROVER_07 {
 		Coord startLoc;
 		Coord targetLoc;
 
+		DStarLite pf = null;
+		List<MapCell> path = null;
+
 		/**
 		 *  Get initial values that won't change
 		 */
@@ -130,6 +140,9 @@ public class ROVER_07 {
 		// get TARGET_LOC
 		targetLoc = q.getLoc(Query.LocType.TARGET);
 		System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
+
+		// build WorldMap
+		worldMap = new WorldMap(targetLoc.xpos + 10, targetLoc.ypos + 10);
 		
 		while (true) {
 			Set<ScienceInfo> commsData = comms.getScience();
@@ -159,6 +172,34 @@ public class ROVER_07 {
 			//System.out.println("ROVER_07 sending SCAN request");
 			scanMap = q.getScan();
 			scanMap.debugPrintMap();
+
+			// merge data
+			// TODO check if we need to grow worldMap to accommodate these updates
+			boolean replan = false;
+			Set<WorldMapCell> changes = worldMap.updateMap(currentLoc, scanMap);
+			for (WorldMapCell cell : changes) {
+				final MapTile tile = cell.getTile();
+				//System.out.println("learned " + cell.getCoord() + " is " +
+				//		tile.getTerrain().getTerString() + tile.getScience().getSciString());
+
+				// check not traversable
+				if (tile.getTerrain() == Terrain.NONE || tile.getTerrain() == Terrain.ROCK) {
+					cell.setBlocked(true);
+					if (pf != null) pf.markChangedCell(cell);
+					replan = true;
+				}
+
+				// communicate science
+				if (tile.getScience() != Science.NONE) {
+					if (comms != null) {
+						comms.sendScience(new ScienceInfo(tile.getTerrain(), tile.getScience(), cell.getCoord()));
+					}
+				}
+			}
+
+			if (replan && pf != null) {
+				pf.updateStart(worldMap.getCell(currentLoc));
+			}
 			
 			
 			
@@ -168,6 +209,56 @@ public class ROVER_07 {
 
 
 			// ***** move *****
+			if (pf == null) {
+				pf = new DStarLite(worldMap, worldMap.getCell(currentLoc), worldMap.getCell(targetLoc));
+				replan = true;
+			}
+
+			if (replan) {
+				pf.solve();
+				path = pf.getPath();
+				System.out.println("--- PATH ---");
+				for (MapCell cell : path) {
+					System.out.println(new Coord(cell.getX(), cell.getY()));
+				}
+			}
+
+			if (!path.isEmpty()) {
+				MapCell next;
+
+				while (true) {
+					if (path.isEmpty()) {
+						next = null;
+						break;
+					}
+					next = path.get(0);
+					if (currentLoc.xpos == next.getX() && currentLoc.ypos == next.getY()) {
+						path.remove(0);
+					} else {
+						break;
+					}
+				}
+
+				if (next != null) {
+					if (next.getX() == currentLoc.xpos + 1) {
+						q.doMove("E");
+					} else if (next.getY() == currentLoc.ypos + 1) {
+						q.doMove("S");
+					} else if (next.getX() == currentLoc.xpos - 1) {
+						q.doMove("W");
+					} else if (next.getY() == currentLoc.ypos - 1) {
+						q.doMove("N");
+					} else {
+						System.err.println("Can't find which way to move: " +
+								"(" + currentLoc.xpos + "," + currentLoc.ypos + ") -> " +
+								"(" + next.getX() + "," + next.getY() + ")");
+					}
+				} else {
+					System.err.println("Nowhere left to go?");
+				}
+			}
+
+			/*
 			// pull the MapTile array out of the ScanMap object
 			MapTile[][] scanMapTiles = scanMap.getScanMap();
 			int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
@@ -235,6 +326,7 @@ public class ROVER_07 {
 					q.doMove("W");
 				}
 			}
+			*/
 
 			// repeat
 			lastLoc = currentLoc;
