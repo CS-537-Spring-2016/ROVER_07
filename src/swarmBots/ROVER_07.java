@@ -223,6 +223,7 @@ public class ROVER_07 {
             }
 
             if (replan) {
+                pf.updateStart(worldMap.getCell(currentLoc));
                 pf.solve();
                 path = pf.getPath();
 
