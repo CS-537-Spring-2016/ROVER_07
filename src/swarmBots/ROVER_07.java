@@ -171,7 +171,7 @@ public class ROVER_07 {
             // ***** do a SCAN *****
             //System.out.println("ROVER_07 sending SCAN request");
             scanMap = q.getScan();
-            scanMap.debugPrintMap();
+            //scanMap.debugPrintMap();
 
 
 
@@ -271,7 +271,7 @@ public class ROVER_07 {
 
             // repeat
             Thread.sleep(sleepTime);
-            System.out.println("ROVER_07 ------------ bottom process control --------------");
+            //System.out.println("ROVER_07 ------------ bottom process control --------------");
         }
     }
 

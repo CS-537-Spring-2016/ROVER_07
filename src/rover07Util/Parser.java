@@ -13,7 +13,6 @@ public final class Parser {
 		Matcher matcher = locationRegex.matcher(str.trim());
 		if (!matcher.matches()) return null;
 		MatchResult res = matcher.toMatchResult();
-		System.out.println("loc = '" + res.group(1) + "' '" + res.group(2) + "'");
 		return new Coord(Integer.parseInt(res.group(1)), Integer.parseInt(res.group(2)));
 	}
 }
