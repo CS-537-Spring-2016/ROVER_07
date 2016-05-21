@@ -20,9 +20,11 @@ public class ServerThread extends Thread {
     private Selector selector;
     private ByteBuffer buffer;
     private Set<String> received; // TODO set contains no duplicates; this should be documented if it is to stay
+    private final ServerSocketChannel serverSocket;
     private final Set<SelectionKey> keysToWrite;
     private final Set<RoverSocket> socketsToRegister;
     private final Set<RoverName> roversToConnect;
+    private final Thread connectionThread;
 
     private final int DEBUG_LEVEL = 0;
     private final String DEBUG_PREFIX = "[ServerThread] ";
@@ -46,14 +48,14 @@ public class ServerThread extends Thread {
         received = Collections.synchronizedSet(new HashSet<>());
         keysToWrite = new HashSet<>();
 
-        final ServerSocketChannel serverSocket = ServerSocketChannel.open();
+        serverSocket = ServerSocketChannel.open();
         serverSocket.bind(new InetSocketAddress("127.0.0.1", serverPort));
         serverSocket.configureBlocking(false);
         serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
         log(1, "listening on " + serverSocket.getLocalAddress());
 
-        final Thread connectionThread = new ConnectionThread(selector, socketsToRegister, roversToConnect);
+        connectionThread = new ConnectionThread(selector, socketsToRegister, roversToConnect);
         connectionThread.start();
     }
 
@@ -88,6 +90,11 @@ public class ServerThread extends Thread {
             } catch (IOException e) {
                 err("IOException in select(): " + e.getMessage());
                 break; // TODO how to handle this?
+            }
+
+            if (interrupted()) {
+                close();
+                break;
             }
 
             // iterate over selected keys
@@ -224,6 +231,16 @@ public class ServerThread extends Thread {
                 key.interestOps(SelectionKey.OP_READ);
             }
         }
+    }
+
+    private void close() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        connectionThread.interrupt();
     }
 
     /**

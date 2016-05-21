@@ -86,7 +86,7 @@ public class ROVER_07 {
 			comms = new RoverComms(RoverName.getEnum(ROVER_NAME));
 		} catch (IOException e) {
 			comms = null;
-			System.err.println("Failed to initialize rover connection: " + e.getMessage());
+			System.err.println("Failed to initialize rover connection");
 			e.printStackTrace();
 		}
 
@@ -109,9 +109,14 @@ public class ROVER_07 {
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} finally {
-			socket.close();
 		}
+
+        try {
+			socket.close();
+		} catch (Exception e) {
+            System.err.println("Failed to close socket");
+            e.printStackTrace();
+        }
 	}
 
 	/**

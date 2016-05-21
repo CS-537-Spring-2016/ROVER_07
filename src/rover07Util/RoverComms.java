@@ -17,6 +17,10 @@ public class RoverComms {
         server.start();
     }
 
+    public void close() {
+        server.interrupt();
+    }
+
     public void sendScience(ScienceInfo info) {
         server.send(Protocol.stringify(info));
     }
@@ -27,7 +31,8 @@ public class RoverComms {
 
         Set<ScienceInfo> infos = new HashSet<>();
         for (String line : queue) {
-            infos.add(Protocol.parse(line));
+            ScienceInfo info = Protocol.parse(line);
+            if (info != null) infos.add(Protocol.parse(line));
         }
         return infos;
     }

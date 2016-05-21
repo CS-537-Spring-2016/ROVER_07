@@ -21,11 +21,18 @@ public class Protocol {
         String[] params = line.split(" ");
         if (params.length < 4) return null;
 
-        Terrain terrain = Terrain.valueOf(params[0]);
-        Science science = Science.valueOf(params[1]);
-        int x = Integer.parseInt(params[2]);
-        int y = Integer.parseInt(params[3]);
-        Coord coord = new Coord(x, y);
-        return new ScienceInfo(terrain, science, coord);
+        ScienceInfo result = null;
+        try {
+            Terrain terrain = Terrain.valueOf(params[0]);
+            Science science = Science.valueOf(params[1]);
+            int x = Integer.parseInt(params[2]);
+            int y = Integer.parseInt(params[3]);
+            Coord coord = new Coord(x, y);
+            result = new ScienceInfo(terrain, science, coord);
+        } catch (Exception e) {
+            System.err.println("[Protocol] Failed to parse line: " + line);
+            e.printStackTrace();
+        }
+        return result;
     }
 }
