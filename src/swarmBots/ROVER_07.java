@@ -118,16 +118,11 @@ public class ROVER_07 {
 	 * Main rover logic
 	 */
 	private void mainLoop() throws IOException, InterruptedException {
-		boolean goingSouth = true;
-		boolean goingEast = true;
-		boolean primaryDirection = true; // primary = N/S, secondary = E/W
-		int sideMovement = 5;
-		Coord lastLoc = null;
-		Coord currentLoc = null;
-
-		ArrayList<String> equipment;
+        ArrayList<String> equipment;
 		Coord startLoc;
 		Coord targetLoc;
+
+        Coord currentLoc;
         Coord goal;
 
 		DStarLite pf = null;
@@ -171,12 +166,6 @@ public class ROVER_07 {
 			// **** do a LOC ****
 			currentLoc = q.getLoc();
 			System.out.println("ROVER_07 current location: " + currentLoc);
-			
-			if (lastLoc != null) {
-				if (currentLoc.xpos != lastLoc.xpos || currentLoc.ypos != lastLoc.ypos) {
-					sideMovement--; // TODO fix misleading var name
-				}
-			}
 
 
 
@@ -281,79 +270,8 @@ public class ROVER_07 {
 				}
 			}
 
-			/*
-			// pull the MapTile array out of the ScanMap object
-			MapTile[][] scanMapTiles = scanMap.getScanMap();
-			int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
-			
-			
-			// TODO move to util method
-			MapTile tileN = scanMapTiles[centerIndex][centerIndex - 1];
-			MapTile tileS = scanMapTiles[centerIndex][centerIndex + 1];
-			MapTile tileE = scanMapTiles[centerIndex + 1][centerIndex];
-			MapTile tileW = scanMapTiles[centerIndex - 1][centerIndex];
-			
-			boolean cannotMoveN = tileN.getHasRover() 
-					|| tileN.getTerrain() == Terrain.ROCK
-					|| tileN.getTerrain() == Terrain.NONE;
-			
-			boolean cannotMoveS = tileS.getHasRover() 
-					|| tileS.getTerrain() == Terrain.ROCK
-					|| tileS.getTerrain() == Terrain.NONE;
-			
-			boolean cannotMoveE = tileE.getHasRover() 
-					|| tileE.getTerrain() == Terrain.ROCK
-					|| tileE.getTerrain() == Terrain.NONE;
-			
-			boolean cannotMoveW = tileW.getHasRover() 
-					|| tileW.getTerrain() == Terrain.ROCK
-					|| tileW.getTerrain() == Terrain.NONE;
-			
-			if (!primaryDirection && sideMovement <= 0) {
-				// reset after moving sideways 5 blocks
-				primaryDirection = true;
-				goingSouth = true;
-			}
-			if (primaryDirection) {
-				if ((goingSouth && cannotMoveS) || (!goingSouth && cannotMoveN)) {
-					if (cannotMoveE && cannotMoveW) {
-						goingSouth = !cannotMoveS;
-					} else {
-						primaryDirection = false;
-						goingEast = !cannotMoveE;
-						sideMovement = 5;
-					}
-				}
-			} else {
-				if ((goingEast && cannotMoveE) || (!goingEast && cannotMoveW)) {
-					if (cannotMoveN && cannotMoveS) {
-						goingEast = !cannotMoveE;
-					} else {
-						primaryDirection = true;
-						goingSouth = !cannotMoveS;
-					}
-				}
-			}
-			
-			// send movement
-			if (primaryDirection) {
-				if (goingSouth) {
-					q.doMove("S");
-				} else {
-					q.doMove("N");
-				}
-			} else {
-				if (goingEast) {
-					q.doMove("E");
-				} else {
-					q.doMove("W");
-				}
-			}
-			*/
-
 			// repeat
-			lastLoc = currentLoc;
-			Thread.sleep(sleepTime);
+            Thread.sleep(sleepTime);
 			System.out.println("ROVER_07 ------------ bottom process control --------------");
 		}
 	}
