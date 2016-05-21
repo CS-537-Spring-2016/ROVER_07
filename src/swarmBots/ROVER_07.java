@@ -156,7 +156,7 @@ public class ROVER_07 {
 			int centerIndex = (scanMap.getEdgeSize() - 1) / 2;
 			
 			
-			// TODO move to util method
+			// TODO move to until method
 			MapTile tileN = scanMapTiles[centerIndex][centerIndex - 1];
 			MapTile tileS = scanMapTiles[centerIndex][centerIndex + 1];
 			MapTile tileE = scanMapTiles[centerIndex + 1][centerIndex];
