@@ -82,7 +82,13 @@ public class ROVER_07 {
 		q = new Query(in, out, gson);
 
 		// Set up rover communications thread
-		comms = new RoverComms(RoverName.getEnum(ROVER_NAME));
+		try {
+			comms = new RoverComms(RoverName.getEnum(ROVER_NAME));
+		} catch (IOException e) {
+			comms = null;
+			System.err.println("Failed to initialize rover connection: " + e.getMessage());
+			e.printStackTrace();
+		}
 
 		// Process all messages from server, wait until server requests Rover ID name
 		while (true) {
@@ -104,7 +110,7 @@ public class ROVER_07 {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			if (socket != null) socket.close();
+			socket.close();
 		}
 	}
 
@@ -145,11 +151,13 @@ public class ROVER_07 {
 		worldMap = new WorldMap(targetLoc.xpos + 10, targetLoc.ypos + 10);
 		
 		while (true) {
-			Set<ScienceInfo> commsData = comms.getScience();
-			if (commsData != null) {
-				for (ScienceInfo info : commsData) {
-					System.out.println("received data from other rover: " +
-							info.getTerrain() + " " + info.getScience() + " " + info.getCoord());
+			if (comms != null) {
+				Set<ScienceInfo> commsData = comms.getScience();
+				if (commsData != null) {
+					for (ScienceInfo info : commsData) {
+						System.out.println("received data from other rover: " +
+								info.getTerrain() + " " + info.getScience() + " " + info.getCoord());
+					}
 				}
 			}
 
