@@ -37,7 +37,7 @@ import rover07Util.WorldMapCell;
 public class ROVER_07 {
 	// connection settings
 	final String ROVER_NAME = "ROVER_07";
-	String SERVER_ADDRESS = "localhost";
+	final String SERVER_ADDRESS;
 	final int PORT_ADDRESS = 9537;
 
 	// IO
@@ -47,9 +47,9 @@ public class ROVER_07 {
 	RoverComms comms;
 
 	// rover vars
+    int sleepTime = 200; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	Gson gson;
 	ScanMap scanMap;
-	int sleepTime;
 	WorldMap worldMap;
 
 	/**
@@ -58,13 +58,11 @@ public class ROVER_07 {
 	public ROVER_07() {
 		System.out.println("ROVER_07 rover object constructed");
 		SERVER_ADDRESS = "localhost";
-		sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	}
 
 	public ROVER_07(String serverAddress) {
 		System.out.println("ROVER_07 rover object constructed");
 		SERVER_ADDRESS = serverAddress;
-		sleepTime = 200; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	}
 
 	/**
@@ -357,7 +355,14 @@ public class ROVER_07 {
 	 * Runs the client
 	 */
 	public static void main(String[] args) throws Exception {
-		ROVER_07 client = new ROVER_07();
+		ROVER_07 client;
+
+        if (args.length > 0) {
+            client = new ROVER_07(args[0]);
+        } else {
+            client = new ROVER_07();
+        }
+
 		client.run();
 	}
 }
