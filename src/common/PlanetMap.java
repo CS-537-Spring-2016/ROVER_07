@@ -28,6 +28,9 @@ public class PlanetMap {
 				this.planetMap[i][j] = new MapTile();
 			}
 		}
+
+
+
 		this.startPosCoord = new Coord(0, 0);
 		this.targetPosCoord = new Coord(0, 0);
 	}
@@ -43,6 +46,77 @@ public class PlanetMap {
 		}
 		this.startPosCoord = startPos;
 		this.targetPosCoord = targetPos;
+
+
+		// temporary use for creating planet terrain for testing
+		this.planetMap[0][17] = new MapTile("G"); 
+		this.planetMap[0][18] = new MapTile("G"); 
+		this.planetMap[1][17] = new MapTile("G"); 
+		this.planetMap[1][18] = new MapTile("G");
+		this.planetMap[16][0] = new MapTile("G"); 
+		this.planetMap[17][0] = new MapTile("G"); 
+		this.planetMap[18][0] = new MapTile("G"); 
+		this.planetMap[16][0] = new MapTile("G"); 
+		this.planetMap[17][1] = new MapTile("G"); 
+		this.planetMap[18][1] = new MapTile("G");
+		
+		
+		
+		this.planetMap[7][7] = new MapTile("R"); 
+		this.planetMap[7][8] = new MapTile("R"); 
+		this.planetMap[8][7] = new MapTile("R"); 
+		this.planetMap[8][8] = new MapTile("R");
+		
+		this.planetMap[15][16] = new MapTile("R"); 
+		this.planetMap[15][17] = new MapTile("R"); 
+		this.planetMap[15][18] = new MapTile("R"); 
+		this.planetMap[15][19] = new MapTile("R"); 
+		this.planetMap[14][18] = new MapTile("R"); 
+		this.planetMap[14][19] = new MapTile("R"); 
+		this.planetMap[14][20] = new MapTile("R"); 
+		this.planetMap[14][21] = new MapTile("R"); 
+		
+		this.planetMap[6][23] = new MapTile("R");
+		this.planetMap[7][23] = new MapTile("R");
+		this.planetMap[7][24] = new MapTile("R");
+		this.planetMap[8][24] = new MapTile("R");
+		this.planetMap[8][25] = new MapTile("R");
+		
+		this.planetMap[4][23] = new MapTile("F");
+		this.planetMap[5][23] = new MapTile("F");
+		
+
+		
+		this.planetMap[3][15] = new MapTile("S");
+		this.planetMap[3][13] = new MapTile("S");
+		this.planetMap[3][14] = new MapTile("S");
+		this.planetMap[4][15] = new MapTile("S");
+		this.planetMap[4][16] = new MapTile("S");
+		this.planetMap[5][15] = new MapTile("S");
+		
+
+		this.planetMap[24][10] = new MapTile("S");
+		this.planetMap[24][11] = new MapTile("S");
+		this.planetMap[24][12] = new MapTile("S");
+		this.planetMap[25][10] = new MapTile("S");
+		this.planetMap[25][11] = new MapTile("S");
+		this.planetMap[25][12] = new MapTile("S");
+		this.planetMap[25][13] = new MapTile("S");
+		this.planetMap[26][10] = new MapTile("S");
+		this.planetMap[26][11] = new MapTile("S");
+		this.planetMap[26][12] = new MapTile("S");
+		this.planetMap[26][13] = new MapTile("S");
+		
+		//adding gravels on the map for testing f treads fucntionality
+		this.planetMap[10][10] = new MapTile("G");
+		this.planetMap[10][11] = new MapTile("G");
+		this.planetMap[11][10] = new MapTile("G");
+		this.planetMap[11][11] = new MapTile("G");
+		this.planetMap[12][10] = new MapTile("G");
+		this.planetMap[12][11] = new MapTile("G");
+		
+
+
 	}
 	
 	public PlanetMap(String filename){

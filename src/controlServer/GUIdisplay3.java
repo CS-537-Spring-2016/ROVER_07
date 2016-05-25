@@ -2,17 +2,22 @@ package controlServer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.*;
+
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
 
 import common.Coord;
 import common.GraphicTile;
@@ -20,13 +25,12 @@ import common.LineSegment;
 import common.PlanetMap;
 import common.RoverLocations;
 import common.ScienceLocations;
+import enums.Science;
 import enums.Terrain;
 
-// Thanks to this posting for the seed this was constructed from:
-// http://stackoverflow.com/questions/30204521/thread-output-to-gui-text-field
-
-public class GUIdisplay2 extends JPanel implements MyGUIAppendable2 {
+public class GUIdisplay3 extends JPanel implements MyGUIAppendable3 {
 	public static final int TILE_SIZE = 20;
+	public final int FONT_SIZE = 18;
 
 	private JTextArea area;
 	private int width;
@@ -35,48 +39,91 @@ public class GUIdisplay2 extends JPanel implements MyGUIAppendable2 {
 	private int pixelHeight;
 	private List<GraphicTile> graphicTiles;
 	private List<LineSegment> lineSegments;
-	private JTextField countdownClock = new JTextField();
+	private JTextField countdownClock;
+	private JTextField countdownTitle;
 	private Timer timer;
+	private JTextField blueScoreTextArea;
+	private JTextField greenScoreTextArea;
+	private JTextField sampleScoreTextArea;
 
 	private Color EXTRA_LIGHT_GREY = new Color(220, 220, 220);
 
-	public GUIdisplay2() { }
+	public GUIdisplay3() {
+	}
 
-	public GUIdisplay2(int width, int height) {
+	public GUIdisplay3(int width, int height, long timeLimit) {
 		this.width = width;
 		this.height = height;
 		this.pixelWidth = (this.width * TILE_SIZE);
 		this.pixelHeight = (this.height * TILE_SIZE);
 		graphicTiles = new ArrayList<>();
 		lineSegments = new ArrayList<>();
-		countDownClock();
+		countDownClock(timeLimit);
+		displayScoreTextInit();
+	}
+
+	private void displayScoreTextInit() {
+		blueScoreTextArea = new JTextField();
+		blueScoreTextArea.setFont(new Font("sansserif", Font.PLAIN, FONT_SIZE));
+		blueScoreTextArea.setBackground(Color.BLUE);
+		blueScoreTextArea.setBorder(null);
+		blueScoreTextArea.setEditable(false);
+		blueScoreTextArea.setHorizontalAlignment(JTextField.CENTER);
+		blueScoreTextArea.setForeground(Color.WHITE);
+		blueScoreTextArea.setText("BLUE: 0");
+
+		greenScoreTextArea = new JTextField();
+		greenScoreTextArea.setFont(new Font("sansserif", Font.PLAIN, FONT_SIZE));
+		greenScoreTextArea.setBackground(Color.GREEN);
+		greenScoreTextArea.setBorder(null);
+		greenScoreTextArea.setEditable(false);
+		greenScoreTextArea.setHorizontalAlignment(JTextField.CENTER);
+		greenScoreTextArea.setText("GREEN: 0");
+
+		sampleScoreTextArea = new JTextField();
+		sampleScoreTextArea.setFont(new Font("sansserif", Font.PLAIN, FONT_SIZE));
+		sampleScoreTextArea.setBackground(Color.RED);
+		sampleScoreTextArea.setBorder(null);
+		sampleScoreTextArea.setEditable(false);
+		sampleScoreTextArea.setHorizontalAlignment(JTextField.CENTER);
+		sampleScoreTextArea.setText("SAMPLE: 0");
 	}
 
 	/**
 	 * got the idea from:
-	 * http://stackoverflow.com/questions/4314725/java-making-time-to-decrease-to-zero-by-swing-timer
+	 * http://stackoverflow.com/questions/4314725/java-making-time-to-decrease-
+	 * to-zero-by-swing-timer
 	 */
-	
-	private void countDownClock() {
+
+	private void countDownClock(final long timeLimit) {
 		// Count down clock
-		countdownClock.setColumns(7);
-		countdownClock.setFont(new Font("sansserif", Font.PLAIN, 24));
-		countdownClock.setHorizontalAlignment(JTextField.CENTER);
-		countdownClock.setBackground(Color.LIGHT_GRAY);
+		countdownTitle = new JTextField();
+		countdownTitle.setFont(new Font("sansserif", Font.PLAIN, FONT_SIZE));
+		countdownTitle.setBackground(Color.ORANGE);
+		countdownTitle.setBorder(null);
+		countdownTitle.setEditable(false);
+		countdownTitle.setHorizontalAlignment(JTextField.CENTER);
+
+		countdownClock = new JTextField();
+		countdownClock.setFont(new Font("sansserif", Font.PLAIN, FONT_SIZE));
+		countdownClock.setBackground(Color.ORANGE);
 		countdownClock.setBorder(null);
 		countdownClock.setEditable(false);
+		countdownClock.setHorizontalAlignment(JTextField.CENTER);
+
 		// create a 1 seconds delay
 		timer = new Timer(1000, new ActionListener() {
 			// private long time = 60 * 1000; //60 seconds
-			private long time = 600 * 1000; // 10 minutes
+			private long time = timeLimit; // 10 minutes
 
 			public void actionPerformed(ActionEvent e) {
 				if (time >= 0) {
 					long s = ((time / 1000) % 60);
 					long m = (((time / 1000) / 60) % 60);
 					long h = ((((time / 1000) / 60) / 60) % 60);
-					//countdownClock.setText(h + " h " + m + " m " + s + " s");
-					countdownClock.setText( "Time remaining: " + m + " minutes " + s + " seconds");
+					// countdownClock.setText(h + " h " + m + " m " + s + " s");
+					countdownTitle.setText("Time Remaining");
+					countdownClock.setText(m + " mins " + s + " s");
 					time -= 1000;
 				}
 			}
@@ -100,7 +147,16 @@ public class GUIdisplay2 extends JPanel implements MyGUIAppendable2 {
 	}
 
 	@Override
-	public void drawThisGraphicTileArray(ArrayList<GraphicTile> gtarraylist, ArrayList<LineSegment> lineSegmentArrayList) {
+	public void setScores(String scoreBlue, String scoreGreen, String scoreSample) {
+		// TODO Auto-generated method stub
+		blueScoreTextArea.setText("BLUE: " + scoreBlue);
+		greenScoreTextArea.setText("GREEN: " + scoreGreen);
+		sampleScoreTextArea.setText("SAMPLE: " + scoreSample);
+	}
+
+	@Override
+	public void drawThisGraphicTileArray(ArrayList<GraphicTile> gtarraylist,
+			ArrayList<LineSegment> lineSegmentArrayList) {
 		this.graphicTiles = gtarraylist;
 		this.lineSegments = lineSegmentArrayList;
 		repaint();
@@ -128,27 +184,43 @@ public class GUIdisplay2 extends JPanel implements MyGUIAppendable2 {
 			g.drawLine(0, i, pixelWidth, i);
 		}
 		// draw the start and target location outlines
-		for(LineSegment lineSegment : lineSegments){
+		for (LineSegment lineSegment : lineSegments) {
 			g.setColor(lineSegment.lineColor);
 			g.drawLine(lineSegment.X1, lineSegment.Y1, lineSegment.X2, lineSegment.Y2);
 		}
-		
+
 	}
 
 	// Set the size of the map display
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(this.pixelWidth + 100, this.pixelHeight + 100);
+		return new Dimension(this.pixelWidth + 200, this.pixelHeight + 50);
 	}
 
 	// Format the countdownclock
 	private void buildDisplay() {
 		this.setLayout(new BorderLayout());
-		add(countdownClock, BorderLayout.AFTER_LAST_LINE);
+
+		JPanel container = new JPanel();
+		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+
+		JPanel emptyPanel = new JPanel();
+		emptyPanel.setPreferredSize(new Dimension(160, 500));
+
+		container.add(countdownTitle);
+		container.add(countdownClock);
+		container.add(blueScoreTextArea);
+		container.add(greenScoreTextArea);
+		container.add(sampleScoreTextArea);
+		container.add(emptyPanel);
+
+		container.setPreferredSize(new Dimension(160, 50));
+		add(container, BorderLayout.EAST);
+		this.repaint();
 
 	}
 
-	static void createAndShowGui(MyGUIWorker2 myWorker, GUIdisplay2 mainPanel) {
+	static void createAndShowGui(MyGUIWorker3 myWorker, GUIdisplay3 mainPanel) {
 		// add a Prop Change listener here to listen for
 		// DONE state then call get() on myWorker
 		myWorker.execute();
@@ -162,19 +234,19 @@ public class GUIdisplay2 extends JPanel implements MyGUIAppendable2 {
 		frame.pack();
 		frame.setLocationByPlatform(true);
 		frame.setVisible(true);
-
 	}
+
 }
 
 // #############################################################################################
 
-class MyGUIWorker2 extends SwingWorker<Void, String> {
-	private MyGUIAppendable2 myAppendable;
+class MyGUIWorker3 extends SwingWorker<Void, String> {
+	private MyGUIAppendable3 myAppendable;
 	private String msg;
 	private RoverLocations roverLoc;
 	private ScienceLocations sciloc;
 
-	public MyGUIWorker2(MyGUIAppendable2 myAppendable) {
+	public MyGUIWorker3(MyGUIAppendable3 myAppendable) {
 		this.myAppendable = myAppendable;
 	}
 
@@ -201,11 +273,10 @@ class MyGUIWorker2 extends SwingWorker<Void, String> {
 	public void displayGraphicMap(RoverLocations roverLoc, ScienceLocations sciloc, PlanetMap planetMap) {
 		int mWidth = planetMap.getWidth();
 		int mHeight = planetMap.getHeight();
-		
+
 		ArrayList<GraphicTile> graphicTiles = new ArrayList<GraphicTile>();
-		 
-		
-		//make the graphic tiles and place in array
+
+		// make the graphic tiles and place in array
 		for (int j = 0; j < mHeight; j++) {
 			for (int i = 0; i < mWidth; i++) {
 				// scan through the map - left to right, top to bottom
@@ -215,7 +286,7 @@ class MyGUIWorker2 extends SwingWorker<Void, String> {
 				if (roverLoc.containsCoord(tcor)) {
 					String rNum = roverLoc.getName(tcor).toString();
 					// make a tile with rover number
-					gtile.setRoverName(rNum.substring(6));	
+					gtile.setRoverName(rNum.substring(6));
 					// then check if there is a terrain feature (if not SOIL
 					// then add terrain to graphicTile )
 				}
@@ -228,10 +299,10 @@ class MyGUIWorker2 extends SwingWorker<Void, String> {
 				graphicTiles.add(gtile);
 			}
 		}
-		
+
 		// Load array with target and start location outline lineSegments
 		ArrayList<LineSegment> lineSegmentArrayList = new ArrayList<LineSegment>();
-		int tileSize = GUIdisplay2.TILE_SIZE;
+		int tileSize = GUIdisplay3.TILE_SIZE;
 		int boxSize;
 		int minSafePos_x;
 		int maxSafePos_x;
@@ -246,47 +317,47 @@ class MyGUIWorker2 extends SwingWorker<Void, String> {
 		int targPos_y = targetPos.ypos;
 		int startOffset = PlanetMap.START_LOCATION_SIZE / 2;
 		int targetOffset = PlanetMap.TARGET_LOCATION_SIZE / 2;
-			
+
 		minSafePos_x = Math.max(strtPos_x - startOffset, 0);
 		maxSafePos_x = Math.min(strtPos_x + startOffset, planetMap.getWidth());
 		minSafePos_y = Math.max(strtPos_y - startOffset, 0);
 		maxSafePos_y = Math.min(strtPos_y + startOffset, planetMap.getHeight());
 		boxSize = PlanetMap.START_LOCATION_SIZE;
 		boxColor = Color.MAGENTA;
-		
-		lineSegmentArrayList.add(
-				new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize)  + tileSize, minSafePos_y * tileSize,  minSafePos_y * tileSize, boxColor));	
-		
-		lineSegmentArrayList.add(
-				new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize)  + tileSize,  (maxSafePos_y * tileSize) + tileSize,  (maxSafePos_y * tileSize) + tileSize,  boxColor));
-		
-		lineSegmentArrayList.add(
-				new LineSegment(minSafePos_x * tileSize, minSafePos_x * tileSize, minSafePos_y * tileSize,  (maxSafePos_y  * tileSize) + tileSize, boxColor));	
-		
-		lineSegmentArrayList.add(
-				new LineSegment((maxSafePos_x * tileSize) + tileSize, (maxSafePos_x * tileSize) + tileSize,  minSafePos_y * tileSize,  (maxSafePos_y  * tileSize) + tileSize,  boxColor));
 
-		
-		minSafePos_x = Math.max(targPos_x - targetOffset, 0) ;
-		maxSafePos_x = Math.min(targPos_x + targetOffset, planetMap.getWidth() -1) ;
-		minSafePos_y = Math.max(targPos_y - targetOffset, 0) ;
-		maxSafePos_y = Math.min(targPos_y + targetOffset, planetMap.getHeight() -1) ;
+		lineSegmentArrayList.add(new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize) + tileSize,
+				minSafePos_y * tileSize, minSafePos_y * tileSize, boxColor));
+
+		lineSegmentArrayList.add(new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize) + tileSize,
+				(maxSafePos_y * tileSize) + tileSize, (maxSafePos_y * tileSize) + tileSize, boxColor));
+
+		lineSegmentArrayList.add(new LineSegment(minSafePos_x * tileSize, minSafePos_x * tileSize,
+				minSafePos_y * tileSize, (maxSafePos_y * tileSize) + tileSize, boxColor));
+
+		lineSegmentArrayList
+				.add(new LineSegment((maxSafePos_x * tileSize) + tileSize, (maxSafePos_x * tileSize) + tileSize,
+						minSafePos_y * tileSize, (maxSafePos_y * tileSize) + tileSize, boxColor));
+
+		minSafePos_x = Math.max(targPos_x - targetOffset, 0);
+		maxSafePos_x = Math.min(targPos_x + targetOffset, planetMap.getWidth() - 1);
+		minSafePos_y = Math.max(targPos_y - targetOffset, 0);
+		maxSafePos_y = Math.min(targPos_y + targetOffset, planetMap.getHeight() - 1);
 		boxSize = PlanetMap.TARGET_LOCATION_SIZE;
 		boxColor = Color.RED;
-		
-		lineSegmentArrayList.add(
-				new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize)  + tileSize, minSafePos_y * tileSize,  minSafePos_y * tileSize, boxColor));	
-		
-		lineSegmentArrayList.add(
-				new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize)  + tileSize,  (maxSafePos_y * tileSize) + tileSize,  (maxSafePos_y * tileSize) + tileSize,  boxColor));
-		
-		lineSegmentArrayList.add(
-				new LineSegment(minSafePos_x * tileSize, minSafePos_x * tileSize, minSafePos_y * tileSize,  (maxSafePos_y  * tileSize) + tileSize, boxColor));	
-		
-		lineSegmentArrayList.add(
-				new LineSegment((maxSafePos_x * tileSize) + tileSize, (maxSafePos_x * tileSize) + tileSize,  minSafePos_y * tileSize,  (maxSafePos_y  * tileSize) + tileSize,  boxColor));
-		
-		
+
+		lineSegmentArrayList.add(new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize) + tileSize,
+				minSafePos_y * tileSize, minSafePos_y * tileSize, boxColor));
+
+		lineSegmentArrayList.add(new LineSegment(minSafePos_x * tileSize, (maxSafePos_x * tileSize) + tileSize,
+				(maxSafePos_y * tileSize) + tileSize, (maxSafePos_y * tileSize) + tileSize, boxColor));
+
+		lineSegmentArrayList.add(new LineSegment(minSafePos_x * tileSize, minSafePos_x * tileSize,
+				minSafePos_y * tileSize, (maxSafePos_y * tileSize) + tileSize, boxColor));
+
+		lineSegmentArrayList
+				.add(new LineSegment((maxSafePos_x * tileSize) + tileSize, (maxSafePos_x * tileSize) + tileSize,
+						minSafePos_y * tileSize, (maxSafePos_y * tileSize) + tileSize, boxColor));
+
 		myAppendable.drawThisGraphicTileArray(graphicTiles, lineSegmentArrayList);
 	}
 
@@ -300,14 +371,25 @@ class MyGUIWorker2 extends SwingWorker<Void, String> {
 			myAppendable.append(text);
 		}
 	}
+
+	public void displayScore(ArrayList<ArrayList<Science>> corpCollectedScience) {
+		String tempBlueScore = Integer.toString(corpCollectedScience.get(1).size());
+		String tempGreenScore = Integer.toString(corpCollectedScience.get(2).size());
+		String tempSampleScore = Integer.toString(corpCollectedScience.get(0).size());
+		myAppendable.setScores(tempBlueScore, tempGreenScore, tempSampleScore);
+	}
 }
 
-interface MyGUIAppendable2 {
-	public void drawThisGraphicTileArray(ArrayList<GraphicTile> graphicTileArraylist, ArrayList<LineSegment> lineSegmentArrayList);
+interface MyGUIAppendable3 {
+	public void drawThisGraphicTileArray(ArrayList<GraphicTile> graphicTileArraylist,
+			ArrayList<LineSegment> lineSegmentArrayList);
 
 	public void append(String text);
 
 	public void setText(String text);
 
 	public void clearDisplay();
+
+	public void setScores(String scoreBlue, String scoreGreen, String scoreSample);
+
 }
