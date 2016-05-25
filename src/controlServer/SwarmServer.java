@@ -362,7 +362,7 @@ public class SwarmServer {
 	                    			System.out.println("SwarmServer: corp " + getCorpNumber(rover) + " total science = " + corpCollectedScience.get(getCorpNumber(rover)).size());
 	                    		}
 	                    		
-	                    		if((rover.getTool_1() == RoverToolType.EXCAVATOR || (rover.getTool_2() == RoverToolType.EXCAVATOR) 
+	                    		if((rover.getTool_1() == RoverToolType.HARVESTER || (rover.getTool_2() == RoverToolType.HARVESTER) 
 	                    				 && (planetMap.getTile(roverPos).getTerrain() == Terrain.SOIL || planetMap.getTile(roverPos).getTerrain() == Terrain.SAND))){
 	                    			// remove the science from scienceLocations and store in rover scienceCargo	
 	                    			Science foundScience = scienceLocations.takeScience(roverPos);
@@ -464,7 +464,7 @@ public class SwarmServer {
 			// length of a side of the scan map array !!! must be odd number !!!
 			int scanRange = STANDARD_SCANMAP_RANGE;
 			// Adjust scanMap range with use of scan range booster
-			if(thisRover.getTool_1() == RoverToolType.RANGE_BOOTER || thisRover.getTool_2() == RoverToolType.RANGE_BOOTER){
+			if(thisRover.getTool_1() == RoverToolType.RANGE_BOOSTER || thisRover.getTool_2() == RoverToolType.RANGE_BOOSTER){
 				scanRange = BOOSTED_SCANMAP_RANGE;
 			}
 

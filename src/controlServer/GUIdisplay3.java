@@ -95,7 +95,7 @@ public class GUIdisplay3 extends JPanel implements MyGUIAppendable3 {
 	 * to-zero-by-swing-timer
 	 */
 
-	private void countDownClock(long timeLimit) {
+	private void countDownClock(final long timeLimit) {
 		// Count down clock
 		countdownTitle = new JTextField();
 		countdownTitle.setFont(new Font("sansserif", Font.PLAIN, FONT_SIZE));
