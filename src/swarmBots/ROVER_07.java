@@ -268,8 +268,9 @@ public class ROVER_07 {
 		{
 			ypos = ypos+1;
 		}
-		if(scanMapTiles[xpos][ypos].getTerrain() == Terrain.SAND 
-				|| scanMapTiles[xpos][ypos].getTerrain() == Terrain.ROCK
+		if(scanMapTiles[xpos][ypos].getTerrain() == Terrain.ROCK 
+				|| scanMapTiles[xpos][ypos].getTerrain() == Terrain.SAND
+				|| scanMapTiles[xpos][ypos].getTerrain() == Terrain.SOIL
 				|| scanMapTiles[xpos][ypos].getTerrain() == Terrain.NONE
 				|| scanMapTiles[xpos][ypos].getHasRover() == true)
 		{
