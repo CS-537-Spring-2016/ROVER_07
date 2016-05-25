@@ -27,7 +27,7 @@ import rover07Util.Parser;
 public class ROVER_07 {
 	// connection settings
 	final String ROVER_NAME = "ROVER_07";
-	String SERVER_ADDRESS = "localhost";
+	String SERVER_ADDRESS = "192.168.1.106";
 	final int PORT_ADDRESS = 9537;
 	final int SERVER_ID = 8087; //this is add for nothing
 
@@ -45,7 +45,7 @@ public class ROVER_07 {
 	 */
 	public ROVER_07() {
 		System.out.println("ROVER_07 rover object constructed");
-		SERVER_ADDRESS = "localhost";
+		SERVER_ADDRESS = "192.168.1.106";
 		sleepTime = 300; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
 	}
 
