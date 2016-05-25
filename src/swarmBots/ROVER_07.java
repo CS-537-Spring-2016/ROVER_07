@@ -99,9 +99,6 @@ public class ROVER_07 {
 	/**
 	 * Try to connect each socket on a separate thread. Will try until it works.
 	 * When socket is created, save it to a LIST
-	 * 
-	 * @author Shay
-	 *
 	 */
 	
 	class RoverComm implements Runnable {
