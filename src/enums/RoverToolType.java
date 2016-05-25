@@ -9,7 +9,7 @@ public enum RoverToolType {
 	SPECTRAL_SENSOR,	// for crystal science locating
 	RADAR_SENSOR,		// for mineral science finding and sensing depth of sandy areas
 	DRILL,		// for extracting from rock - also tow other rovers
-	EXCAVATOR;	// for extracting from sand, gravel, and soil
+	EXCAVATOR, HARVESTER, RANGE_BOOSTER;	// for extracting from sand, gravel, and soil
 	
     public static RoverToolType getEnum(String input){
     	RoverToolType output;
