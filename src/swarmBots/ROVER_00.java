@@ -170,14 +170,25 @@ public class ROVER_00 {
 				// ***** do a SCAN *****
 
 				// gets the scanMap from the server based on the Rover current location
-				loadScanMapFromSwarmServer();
+				doScan(); 
 				// prints the scanMap to the Console output for debug purposes
 				scanMap.debugPrintMap();
 				
 		
 				
 				
-
+				// ***** get TIMER remaining *****
+				out.println("TIMER");
+				line = in.readLine();
+	            if (line == null) {
+	            	System.out.println(rovername + " check connection to server");
+	            	line = "";
+	            }
+				if (line.startsWith("TIMER")) {
+					String timeRemaining = line.substring(6);
+					System.out.println(rovername + " timeRemaining: " + timeRemaining);
+				}
+				
 				
 	
 				
@@ -192,7 +203,8 @@ public class ROVER_00 {
 					blocked = false;
 					//reverses direction after being blocked
 					goingSouth = !goingSouth;
-				} else {	
+				} else {
+	
 					// pull the MapTile array out of the ScanMap object
 					MapTile[][] scanMapTiles = scanMap.getScanMap();
 					int centerIndex = (scanMap.getEdgeSize() - 1)/2;
@@ -245,7 +257,7 @@ public class ROVER_00 {
 				// test for stuckness
 				stuck = currentLoc.equals(previousLoc);
 	
-				System.out.println("ROVER_00 stuck test " + stuck);
+				//System.out.println("ROVER_00 stuck test " + stuck);
 				System.out.println("ROVER_00 blocked test " + blocked);
 	
 				// TODO - logic to calculate where to move next
@@ -325,7 +337,7 @@ public class ROVER_00 {
 	
 
 	// sends a SCAN request to the server and puts the result in the scanMap array
-	public void loadScanMapFromSwarmServer() throws IOException {
+	public void doScan() throws IOException {
 		//System.out.println("ROVER_00 method doScan()");
 		Gson gson = new GsonBuilder()
     			.setPrettyPrinting()
