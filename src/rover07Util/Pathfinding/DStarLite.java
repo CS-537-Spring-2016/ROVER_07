@@ -268,6 +268,10 @@ public class DStarLite {
     }
 
     public List<MapCell> getPath() {
-        return new ArrayList<>(path);
+        if (path != null) {
+            return new ArrayList<>(path);
+        } else {
+            return new ArrayList<>();
+        }
     }
 }
