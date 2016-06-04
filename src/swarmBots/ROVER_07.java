@@ -30,30 +30,16 @@ import java.util.Set;
 
 public class ROVER_07 {
     // connection settings
-    final String ROVER_NAME = "ROVER_07";
-    final String SERVER_ADDRESS;
-    final int PORT_ADDRESS = 9537;
+    private final String ROVER_NAME = "ROVER_07";
+    private final String SERVER_ADDRESS;
+    private final int PORT_ADDRESS = 9537;
 
-    // IO
-    BufferedReader in;
-    PrintWriter out;
-    Query q;
-    RoverComms comms;
-
-    // rover vars
-    int sleepTime = 200; // in milliseconds - smaller is faster, but the server will cut connection if it is too small
-    Gson gson;
-    ScanMap scanMap;
-    WorldMap worldMap;
+    private Query q;
+    private RoverComms comms;
 
     /**
      * Constructors
      */
-    public ROVER_07() {
-        System.out.println("ROVER_07 rover object constructed");
-        SERVER_ADDRESS = "localhost";
-    }
-
     public ROVER_07(String serverAddress) {
         System.out.println("ROVER_07 rover object constructed");
         SERVER_ADDRESS = serverAddress;
@@ -63,13 +49,13 @@ public class ROVER_07 {
      * Connects to the server then enters the processing loop.
      */
     private void run() throws IOException {
-        gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         // Make connection and initialize streams
         // TODO - need to close this socket
         Socket socket = new Socket(SERVER_ADDRESS, PORT_ADDRESS);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
         q = new Query(in, out, gson);
 
@@ -95,11 +81,7 @@ public class ROVER_07 {
         // Enter main loop
         try {
             mainLoop();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -143,7 +125,7 @@ public class ROVER_07 {
         System.out.println(ROVER_NAME + " TARGET_LOC " + targetLoc);
 
         // build WorldMap
-        worldMap = new WorldMap(targetLoc.xpos + 10, targetLoc.ypos + 10);
+        WorldMap worldMap = new WorldMap(targetLoc.xpos + 10, targetLoc.ypos + 10);
 
         // build GoalPicker
         final GoalPicker goalPicker = new GoalPicker();
@@ -190,7 +172,7 @@ public class ROVER_07 {
 
             // ***** do a SCAN *****
             //System.out.println("ROVER_07 sending SCAN request");
-            scanMap = q.getScan();
+            ScanMap scanMap = q.getScan();
             //scanMap.debugPrintMap();
 
 
@@ -298,7 +280,7 @@ public class ROVER_07 {
             }
 
             // repeat
-            Thread.sleep(sleepTime);
+            Thread.sleep(200);
             //System.out.println("ROVER_07 ------------ bottom process control --------------");
         }
     }
@@ -314,7 +296,7 @@ public class ROVER_07 {
         if (args.length > 0) {
             client = new ROVER_07(args[0]);
         } else {
-            client = new ROVER_07();
+            client = new ROVER_07("localhost");
         }
 
         client.run();
