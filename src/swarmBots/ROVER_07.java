@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -107,6 +108,7 @@ public class ROVER_07 {
 
         DStarLite pf = null;
         List<MapCell> path = null;
+        Set<WorldMapCell> roverCells = new HashSet<>();
 
         /**
          *  Get initial values that won't change
@@ -228,6 +230,39 @@ public class ROVER_07 {
 
                     if (comms != null) {
                         comms.sendScience(new ScienceInfo(tile.getTerrain(), tile.getScience(), cell.getCoord()));
+                    }
+                }
+            }
+
+            // mark rover cells as blocked
+            {
+                // unblock last set
+                for (WorldMapCell cell : roverCells) {
+                    cell.setBlocked(false);
+                    if (pf != null) pf.markChangedCell(cell);
+                    replan = true;
+                }
+                roverCells.clear();
+
+                // block new set
+                final int scanSize = scanMap.getEdgeSize();
+                final MapTile[][] scanTiles = scanMap.getScanMap();
+                final int radius = scanSize >> 1;
+                final int startX = currentLoc.xpos - radius;
+                final int startY = currentLoc.ypos - radius;
+                for (int dx = 0; dx < scanSize; dx++) {
+                    for (int dy = 0; dy < scanSize; dy++) {
+                        if (dx == radius && dy == radius) continue; // don't block our own spot
+
+                        if (scanTiles[dx][dy].getHasRover()) {
+                            WorldMapCell cell = worldMap.getCell(startX + dx, startY + dy);
+                            if (cell == null || cell.isBlocked()) continue;
+
+                            cell.setBlocked(true);
+                            roverCells.add(cell);
+                            if (pf != null) pf.markChangedCell(cell);
+                            replan = true;
+                        }
                     }
                 }
             }
