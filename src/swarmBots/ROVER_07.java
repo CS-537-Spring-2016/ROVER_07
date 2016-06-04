@@ -178,6 +178,36 @@ public class ROVER_07 {
 
             boolean replan = false;
 
+            { // check if we need to grow world map
+                int extentX = 0;
+                int extentY = 0;
+
+                final int scanSize = scanMap.getEdgeSize();
+                final MapTile[][] map = scanMap.getScanMap();
+                for (int x = 0; x < scanSize; x++) {
+                    for (int y = 0; y < scanSize; y++) {
+                        if (x <= extentX && y <= extentY) continue;
+                        final MapTile tile = map[x][y];
+                        if (tile.getTerrain() != Terrain.NONE) {
+                            extentX = Math.max(x, extentX);
+                            extentY = Math.max(y, extentY);
+                        }
+                    }
+                }
+
+                final int maxX = currentLoc.xpos - (scanSize >> 1) + extentX;
+                final int maxY = currentLoc.ypos - (scanSize >> 1) + extentY;
+
+                final int growX = Math.max(maxX - worldMap.getWidth(), 0);
+                final int growY = Math.max(maxY - worldMap.getHeight(), 0);
+
+                if (growX + growY > 0) {
+                    worldMap.grow(growX, growY);
+                    if (pf != null) pf = new DStarLite(worldMap, worldMap.getCell(currentLoc), worldMap.getCell(goal));
+                    replan = true;
+                }
+            }
+
             // merge terrain/science changes
             Set<WorldMapCell> changes = worldMap.updateMap(currentLoc, scanMap);
             for (WorldMapCell cell : changes) {

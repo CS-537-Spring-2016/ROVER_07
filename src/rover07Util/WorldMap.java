@@ -21,8 +21,8 @@ public class WorldMap implements Map {
     };
 
     private final List<List<WorldMapCell>> map;
-    private final int width;
-    private final int height;
+    private int width;
+    private int height;
 
     public WorldMap(int width, int height) {
         this.width = width;
@@ -70,6 +70,27 @@ public class WorldMap implements Map {
         }
 
         return changed;
+    }
+
+    public void grow(int growX, int growY) {
+        // add columns to existing rows
+        for (int y = 0; y < height; y++) {
+            List<WorldMapCell> row = map.get(y);
+            for (int dx = 0; dx < growX; dx++) {
+                row.add(new WorldMapCell(new Coord(width + dx, y), null));
+            }
+        }
+        width += growX;
+
+        // add new rows
+        for (int dy = 0; dy < growY; dy++) {
+            List<WorldMapCell> row = new ArrayList<>();
+            for (int x = 0; x < width; x++) {
+                row.add(new WorldMapCell(new Coord(x, height + dy), null));
+            }
+            map.add(row);
+        }
+        height += growY;
     }
 
     @Override
