@@ -52,7 +52,6 @@ public class ROVER_07 {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         // Make connection and initialize streams
-        // TODO - need to close this socket
         Socket socket = new Socket(SERVER_ADDRESS, PORT_ADDRESS);
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
