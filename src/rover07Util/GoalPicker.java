@@ -26,6 +26,12 @@ public class GoalPicker {
         if (cell != null) defaultCells.add(cell);
     }
 
+    public void removeGoal(WorldMapCell cell) {
+        if (cell == null) return;
+        defaultCells.remove(cell);
+        possibleCells.remove(cell);
+    }
+
     public Coord getClosestScience(Coord currentLoc) {
         Coord closest = null;
         int distance = Integer.MAX_VALUE;

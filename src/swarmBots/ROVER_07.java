@@ -110,6 +110,8 @@ public class ROVER_07 {
         List<MapCell> path = null;
         Set<WorldMapCell> roverCells = new HashSet<>();
 
+        int failures = 0;
+
         /**
          *  Get initial values that won't change
          */
@@ -291,6 +293,7 @@ public class ROVER_07 {
             if (!bestGoal.equals(goal)) {
                 System.out.println("best goal -> " + bestGoal);
                 goal = bestGoal;
+                failures = 0;
                 pf = null;
             }
 
@@ -312,7 +315,12 @@ public class ROVER_07 {
 				*/
             }
 
-            if (!path.isEmpty()) {
+            if (path.isEmpty()) {
+                ++failures;
+                if (failures >= 5) {
+                    goalPicker.removeGoal(worldMap.getCell(goal));
+                }
+            } else {
                 MapCell next;
 
                 while (true) {
@@ -341,7 +349,10 @@ public class ROVER_07 {
                         System.err.println("Can't find which way to move: " +
                                 "(" + currentLoc.xpos + "," + currentLoc.ypos + ") -> " +
                                 "(" + next.getX() + "," + next.getY() + ")");
+                        pf = null;
                     }
+
+                    failures = 0;
                 } else {
                     System.err.println("Nowhere left to go?");
                 }
