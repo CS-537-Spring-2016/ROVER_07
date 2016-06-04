@@ -55,6 +55,10 @@ public class GoalPicker {
             // calculate distance
             Coord here = cell.getCoord();
             int dist = Math.abs(here.xpos - currentLoc.xpos) + Math.abs(here.ypos - currentLoc.ypos);
+            if (dist == 0) {
+                i.remove();
+                continue;
+            }
             if (dist < distance) {
                 closest = here;
                 distance = dist;
