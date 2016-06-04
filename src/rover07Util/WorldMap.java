@@ -3,6 +3,7 @@ package rover07Util;
 import common.Coord;
 import common.MapTile;
 import common.ScanMap;
+import enums.Science;
 import rover07Util.Pathfinding.Map;
 import rover07Util.Pathfinding.MapCell;
 
@@ -55,9 +56,12 @@ public class WorldMap implements Map {
 
                 final MapTile newTile = scanned[dx][dy];
                 final MapTile oldTile = cell.getTile();
-                if (oldTile != null && oldTile.getTerrain() == newTile.getTerrain() && oldTile.getScience() == newTile.getScience()) {
-                    cell.touch();
-                    continue;
+                if (oldTile != null && oldTile.getTerrain() == newTile.getTerrain()) {
+                    Science oldScience = oldTile.getScience();
+                    if (oldScience != Science.NONE || oldScience == newTile.getScience()) {
+                        cell.touch();
+                        continue;
+                    }
                 }
 
                 cell.setTile(newTile);

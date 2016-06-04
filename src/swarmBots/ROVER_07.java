@@ -157,6 +157,26 @@ public class ROVER_07 {
                         System.out.println("received data from other rover: " +
                                 info.getTerrain() + " " + info.getScience() + " " + info.getCoord());
 
+                        // get cell from world map
+                        WorldMapCell cell = worldMap.getCell(info.getCoord());
+                        if (cell == null) continue;
+
+                        // update tile
+                        MapTile tile = cell.getTile();
+                        if (tile == null) {
+                            tile = new MapTile(info.getTerrain(), info.getScience(), 0, false);
+                            cell.setTile(tile);
+
+                            // if we had to generate a new tile, we need to check if it's traversable for pf
+                            if (tile.getTerrain() == Terrain.NONE || tile.getTerrain() == Terrain.ROCK) {
+                                cell.setBlocked(true);
+                                if (pf != null) pf.markChangedCell(cell);
+                            }
+                        } else {
+                            tile.setSciecne(info.getScience());
+                        }
+
+                        // add to goalpicker
                         goalPicker.addCell(worldMap.getCell(info.getCoord()));
                     }
                 }
@@ -205,6 +225,13 @@ public class ROVER_07 {
 
             // ***** do a GATHER *****
             q.doGather();
+            { // unmark any gatherable science at this loc
+                MapTile tile = worldMap.getCell(currentLoc).getTile();
+                Terrain terr = tile.getTerrain();
+                if (terr != Terrain.ROCK && terr != Terrain.GRAVEL) {
+                    tile.setSciecne(Science.NONE);
+                }
+            }
 
 
 
