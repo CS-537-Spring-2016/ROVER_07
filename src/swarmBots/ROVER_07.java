@@ -289,7 +289,10 @@ public class ROVER_07 {
 
             // ***** move *****
             Coord bestGoal = goalPicker.getClosestGoal(currentLoc);
-            if (bestGoal == null) bestGoal = targetLoc;
+            if (bestGoal == null) {
+                // TODO perform clustering to find least discovered areas?
+                bestGoal = targetLoc;
+            }
             if (!bestGoal.equals(goal)) {
                 System.out.println("best goal -> " + bestGoal);
                 goal = bestGoal;
@@ -297,22 +300,17 @@ public class ROVER_07 {
                 pf = null;
             }
 
+            // if pf is null, we need to make a new instance of D*Lite
             if (pf == null) {
                 pf = new DStarLite(worldMap, worldMap.getCell(currentLoc), worldMap.getCell(goal));
                 replan = true;
             }
 
+            // if replan is true, we need to (re)calculate a path
             if (replan) {
                 pf.updateStart(worldMap.getCell(currentLoc));
                 pf.solve();
                 path = pf.getPath();
-
-				/*
-				System.out.println("--- PATH ---");
-				for (MapCell cell : path) {
-					System.out.println(new Coord(cell.getX(), cell.getY()));
-				}
-				*/
             }
 
             if (path.isEmpty()) {
