@@ -175,6 +175,13 @@ public class ServerThread extends Thread {
             int read = client.read(buffer);
             if (read == 0) break;
 
+            // negative read means disconnect
+            if (read < 0) {
+                client.close(); // TODO is this needed?
+                key.cancel();
+                return;
+            }
+
             // flip buffer for writing
             buffer.flip();
 
