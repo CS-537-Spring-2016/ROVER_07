@@ -10,10 +10,9 @@ import java.util.*;
 /**
  * Periodically attempts to spawn outgoing connections to all other rovers.
  *
- * @author Michael Fong (meishuu)
+ * @author Michael Fong (G7) [@meishuu]
  */
 class ConnectionThread extends Thread {
-    // TODO this whole thing is a mess but it works for now
     private final Selector selector;
     private final Set<RoverSocket> socketsToRegister;
     private final Set<RoverName> roversToConnect;

@@ -2,16 +2,15 @@ package rover07Util.Pathfinding;
 
 import java.util.*;
 
-/**
- * @author Michael Fong (G7) [@meishuu]
- */
-
 // largely based on "D* Lite Demonstration" by Luis Henrique Oliveira Rios
 //   <http://www.luisrios.eti.br/public/en_us/research/d_star_lite_demo/>
 
 // annotated with code references to "D* Lite" by S. Koenig and M. Likhachev
 //    <http://idm-lab.org/bib/abstracts/papers/aaai02b.pdf>
 
+/**
+ * @author Michael Fong (G7) [@meishuu]
+ */
 public class DStarLite {
     private final int MAX_STEPS = 100000;
 

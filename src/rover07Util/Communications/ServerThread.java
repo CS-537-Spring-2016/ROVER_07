@@ -14,12 +14,12 @@ import java.util.*;
  * Strings sent via send() are broadcast to all currently connected sockets, and all lines received from any socket
  * will be added to a buffer that is returned and cleared on calling getReceiveQueue().
  *
- * @author Michael Fong (meishuu)
+ * @author Michael Fong (G7) [@meishuu]
  */
 public class ServerThread extends Thread {
-    private Selector selector;
-    private ByteBuffer buffer;
-    private Set<String> received; // TODO set contains no duplicates; this should be documented if it is to stay
+    private final Selector selector;
+    private final ByteBuffer buffer;
+    private final Set<String> received; // set contains no duplicates; this should be documented if it is to stay
     private final ServerSocketChannel serverSocket;
     private final Set<SelectionKey> keysToWrite;
     private final Set<RoverSocket> socketsToRegister;
