@@ -130,6 +130,10 @@ public class ROVER_07 {
 
         // build GoalPicker
         final GoalPicker goalPicker = new GoalPicker();
+        goalPicker.addDefault(worldMap.getCell(targetLoc)); // target corner
+        goalPicker.addDefault(worldMap.getCell(startLoc.xpos, targetLoc.ypos)); // top right corner
+        goalPicker.addDefault(worldMap.getCell(targetLoc.xpos, startLoc.ypos)); // bottom left corner
+
         goal = targetLoc; // initial goal
 
         while (true) {
@@ -282,10 +286,10 @@ public class ROVER_07 {
 
 
             // ***** move *****
-            Coord bestGoal = goalPicker.getClosestScience(currentLoc);
+            Coord bestGoal = goalPicker.getClosestGoal(currentLoc);
             if (bestGoal == null) bestGoal = targetLoc;
             if (!bestGoal.equals(goal)) {
-                System.out.println("closet science @ " + goal);
+                System.out.println("best goal -> " + bestGoal);
                 goal = bestGoal;
                 pf = null;
             }
